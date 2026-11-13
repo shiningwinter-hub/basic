@@ -3,105 +3,236 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 명탐정</title>
+    <title>AI 그림 탐정단</title>
     <style>
-        :root { --border: #ccc; --purple: #8e44ad; }
-        body { font-family: 'Pretendard', sans-serif; padding: 20px; max-width: 900px; margin: 0 auto; background-color: #f9f9fc; }
-        h2, h3 { color: #333; }
-        .teacher-section { background: white; border: 1px solid var(--border); padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .note { font-size: 0.9em; color: #666; }
-        .setting { margin-bottom: 10px; display: flex; flex-direction: column; }
-        .setting input, .setting select { padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; font-size: 1em; }
-        .btn { padding: 10px 15px; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; transition: background 0.2s; }
-        .btn.primary { background-color: var(--purple); color: white; }
-        .btn.primary:hover { background-color: #732d91; }
-        .btn.danger { background-color: #e74c3c; color: white; }
-        .btn.danger:hover { background-color: #c0392b; }
-        #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: #fff; padding: 10px 20px; border-radius: 20px; display: none; z-index: 1000; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        :root { 
+            --primary: #8e44ad; 
+            --primary-light: #f3e5f5;
+            --secondary: #3498db;
+            --secondary-light: #e3f2fd;
+            --bg: #fdfaf6;
+            --border: #e0e0e0;
+            --text: #333;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+        }
+        body { 
+            font-family: 'Pretendard', -apple-system, sans-serif; 
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0; 
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
         
-        .flex-container { display: flex; gap: 20px; flex-wrap: wrap; }
-        .flex-child { flex: 1; min-width: 300px; background: white; border: 2px solid; border-radius: 12px; padding: 20px; }
+        /* Header */
+        .header { text-align: center; margin-bottom: 20px; background: #fff5e6; padding: 20px; border-radius: 15px; }
+        .header h1 { margin: 0 0 10px 0; color: #5c3a21; font-size: 1.8em; }
+        .header p { margin: 0 0 15px 0; color: #666; font-size: 0.9em; }
+        .header-btns button { padding: 8px 15px; margin: 0 5px; border-radius: 20px; border: 1px solid var(--border); background: white; cursor: pointer; }
         
-        .student-header { text-align: center; margin-bottom: 30px; }
+        /* Mission & Tabs */
+        .mission-header { margin-bottom: 15px; font-weight: bold; color: #f39c12; }
+        
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-btn { 
+            flex: 1; padding: 15px; background: white; border: 2px solid var(--border); 
+            border-radius: 10px; cursor: pointer; display: flex; flex-direction: column; 
+            align-items: center; transition: all 0.2s;
+        }
+        .tab-btn.active { border-color: var(--primary); background: var(--primary-light); }
+        .tab-btn strong { font-size: 1.1em; margin-bottom: 5px; color: var(--text); }
+        .tab-btn span { font-size: 0.8em; color: #777; }
+        
+        /* Main Layout */
+        .main-grid { display: flex; gap: 20px; align-items: stretch; flex-wrap: wrap; }
+        .panel { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); flex: 1; min-width: 300px; }
+        .panel-title { font-weight: bold; margin-bottom: 15px; font-size: 1.1em; display: flex; align-items: center; gap: 5px; }
+        
+        /* Left Panel - Image & Result */
+        .target-img-box { background: #f8f9fa; border-radius: 10px; height: 250px; display: flex; justify-content: center; align-items: center; overflow: hidden; margin-bottom: 20px; }
+        .target-img-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        
+        .result-box { background: #f8f9fa; border: 1px dashed var(--border); border-radius: 10px; min-height: 200px; padding: 15px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .result-img { max-width: 100%; max-height: 250px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-top: 10px; }
+        
+        /* Right Panel - Form Area */
+        .question-group { margin-bottom: 20px; }
+        .question-title { font-size: 0.95em; margin-bottom: 10px; color: #444; }
+        .options-grid { display: flex; gap: 10px; }
+        .option-btn { 
+            flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 10px; 
+            background: white; cursor: pointer; text-align: center; font-size: 0.95em; transition: 0.2s;
+        }
+        .option-btn:hover { background: #f9f9f9; }
+        .option-btn.selected { border-color: var(--danger); background: #fff5f5; color: var(--danger); font-weight: bold; }
+        
+        /* C형 Text Input */
+        .c-type-input { width: 100%; height: 100px; padding: 15px; border: 1px solid var(--border); border-radius: 10px; resize: none; font-size: 1em; box-sizing: border-box; }
+        
+        /* Summary Box */
+        .summary-box { background: var(--primary-light); padding: 15px; border-radius: 10px; margin-top: 20px; }
+        .summary-text { font-weight: bold; color: var(--primary); min-height: 24px; }
+        
+        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
+        .btn { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; font-size: 1em; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-outline { background: white; border: 1px solid var(--primary); color: var(--primary); }
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        
+        /* Teacher Mode */
+        .teacher-area { margin-top: 50px; border-top: 2px dashed var(--border); padding-top: 30px; }
+        #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: #fff; padding: 10px 20px; border-radius: 20px; display: none; z-index: 1000; }
+        
+        /* Hidden elements */
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
-
-    <!-- 학생 화면 영역 -->
-    <div id="studentArea">
-        <div class="student-header">
-            <h2>🕵️‍♂️ AI 명탐정 미션 (학생 화면)</h2>
-            <p>선생님이 지정한 미션을 선택하고, 목표 그림과 똑같이 단어를 조합해 그림을 그려보세요!</p>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🕵️‍♂️ AI 그림 탐정단</h1>
+            <p>보고 👀 · 말하고 🗣️ · 정답을 맞혀 AI 그림을 선물 받아요! 🎨</p>
+            <div class="header-btns">
+                <button>🔊 안내 듣기</button>
+                <button onclick="location.reload()">↺ 처음부터</button>
+            </div>
         </div>
         
-        <div class="setting" style="max-width: 300px; margin: 0 auto 20px auto;">
-            <label style="font-weight: bold;">진행할 미션 선택:
-                <select id="studentMissionSelect">
-                    <option value="1">미션 1</option>
-                    <option value="2">미션 2</option>
-                    <option value="3">미션 3</option>
-                    <option value="4">미션 4</option>
-                    <option value="5">미션 5</option>
-                </select>
-            </label>
+        <!-- Mission Select -->
+        <div class="mission-header">
+            ⭐ 미션 
+            <select id="missionSelect" style="border:none; font-weight:bold; color:#f39c12; font-size:1em; outline:none; background:transparent;">
+                <option value="1">1 / 5</option>
+                <option value="2">2 / 5</option>
+                <option value="3">3 / 5</option>
+                <option value="4">4 / 5</option>
+                <option value="5">5 / 5</option>
+            </select>
         </div>
 
-        <div class="flex-container">
-            <!-- 목표 그림 (Firebase 연동) -->
-            <div class="flex-child" style="border-color: #3498db;">
-                <h3 style="margin-top:0; color:#3498db; text-align: center;">🎯 목표 그림</h3>
-                <div id="targetImageContainer" style="text-align: center; min-height: 200px; display: flex; align-items: center; justify-content: center; background: #f0f8ff; border-radius: 8px;">
-                    <p>미션을 선택하면 선생님이 올린 그림이 나타납니다.</p>
+        <!-- Tabs -->
+        <div class="tabs">
+            <div class="tab-btn active" data-tab="A" onclick="switchTab('A')">
+                <strong>🌸 A형 · 그림 선택</strong>
+                <span>그림 카드를 눌러 설명해요</span>
+            </div>
+            <div class="tab-btn" data-tab="B" onclick="switchTab('B')">
+                <strong>🧩 B형 · 단어 조합</strong>
+                <span>단어를 골라 문장을 만들어요</span>
+            </div>
+            <div class="tab-btn" data-tab="C" onclick="switchTab('C')">
+                <strong>🎤 C형 · 말하기·쓰기</strong>
+                <span>직접 말하거나 적어요</span>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-grid">
+            <!-- Left Panel -->
+            <div class="panel">
+                <div class="panel-title">👀 ① 목표 그림을 살펴봐요</div>
+                <div class="target-img-box" id="targetImageContainer">
+                    <p style="color:#999;">클라우드에서 그림을 불러오는 중...</p>
+                </div>
+                
+                <div class="panel-title" style="margin-top:20px; color: var(--danger);">🌸 ③ 내가 찾은 결과 확인</div>
+                <div class="result-box" id="resultBox">
+                    <p style="color: #666; font-size: 0.9em;">설명한 뒤 정답 확인하기 버튼을 눌러요!</p>
+                    <!-- 결과가 여기에 동적으로 들어갑니다 -->
                 </div>
             </div>
 
-            <!-- 학생의 AI 그림 (Gemini API) -->
-            <div class="flex-child" style="border-color: var(--purple);">
-                <h3 style="margin-top:0; color:var(--purple); text-align: center;">🎨 나의 AI 그림</h3>
-                <button class="btn primary" id="runMissionBtn" style="width: 100%;">그림 그리기 테스트</button>
-                <div id="imageResult" style="margin-top:20px; text-align: center; min-height: 200px; display: flex; align-items: center; justify-content: center; background: #faf5ff; border-radius: 8px;">
-                    <p class="note">버튼을 누르면 AI가 그림을 그립니다.</p>
+            <!-- Right Panel -->
+            <div class="panel" id="rightPanel">
+                <div class="panel-title" style="color: var(--danger);">🖍️ ② 그림을 설명해요</div>
+                
+                <!-- A형 / B형 공통 요소 선택 영역 -->
+                <div id="selectionArea">
+                    <div class="question-group">
+                        <div class="question-title">① 어떤 동물인가요?</div>
+                        <div class="options-grid" id="q_animal">
+                            <button class="option-btn" onclick="selectOption('animal', '강아지')">🐶 강아지</button>
+                            <button class="option-btn" onclick="selectOption('animal', '고양이')">🐱 고양이</button>
+                        </div>
+                    </div>
+                    <div class="question-group">
+                        <div class="question-title">② 무엇을 가지고 있나요?</div>
+                        <div class="options-grid" id="q_item">
+                            <button class="option-btn" onclick="selectOption('item', '모자')">🎩 모자</button>
+                            <button class="option-btn" onclick="selectOption('item', '목도리')">🧣 목도리</button>
+                        </div>
+                    </div>
+                    <div class="question-group">
+                        <div class="question-title">③ 어떤 색깔인가요?</div>
+                        <div class="options-grid" id="q_color">
+                            <button class="option-btn" onclick="selectOption('color', '빨간')">❤️ 빨간</button>
+                            <button class="option-btn" onclick="selectOption('color', '파란')">💙 파란</button>
+                        </div>
+                    </div>
+                    <div class="question-group">
+                        <div class="question-title">④ 어디에 있나요?</div>
+                        <div class="options-grid" id="q_place">
+                            <button class="option-btn" onclick="selectOption('place', '잔디밭')">🌱 잔디밭</button>
+                            <button class="option-btn" onclick="selectOption('place', '바닷가')">🏖️ 바닷가</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- C형 텍스트 입력 영역 (기본 숨김) -->
+                <div id="typingArea" class="hidden">
+                    <p class="question-title">보이는 그림을 자세히 설명해주세요.</p>
+                    <textarea id="cTypeInput" class="c-type-input" placeholder="예: 빨간 모자를 쓴 강아지가 잔디밭에 있어요."></textarea>
+                </div>
+
+                <!-- Summary & Actions -->
+                <div class="summary-box">
+                    <div style="font-size: 0.8em; color: #666; margin-bottom: 5px;">내가 만든 설명</div>
+                    <div class="summary-text" id="summaryText">단어를 선택하거나 문장을 적어 보세요.</div>
+                    
+                    <div class="btn-group">
+                        <button class="btn btn-outline" id="listenBtn">🔊 설명 듣기</button>
+                        <button class="btn btn-primary" id="checkAnswerBtn" onclick="checkAnswer()">🔍 정답 확인하기</button>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 15px; padding: 15px; background:#fff9e6; border-radius:10px; font-size:0.85em;">
+                    <strong>💡 천천히 해도 괜찮아요!</strong><br>
+                    설명이 맞는지 확인하고, 완벽하면 멋진 AI 그림을 선물 받을 수 있어요!
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- 선생님 로그인 영역 -->
-    <div id="teacherLogin" style="margin-top:60px; border-top: 2px solid #ccc; padding-top:40px; text-align: center;">
-        <h3 style="margin-bottom: 15px;">👨‍🏫 선생님 모드 로그인</h3>
-        <input type="password" id="teacherPw" placeholder="비밀번호(1234)" style="padding: 10px; border-radius: 4px; border: 1px solid #ccc; font-size:1em;">
-        <button class="btn primary" id="pwBtn">로그인</button>
-    </div>
-
-    <!-- 선생님 설정 화면 (로그인 후 표시) -->
-    <div id="teacherContent" style="display: none; border-top:2px solid #ccc; margin-top:30px; padding-top:30px;">
-        <h2 style="color: #2c3e50; text-align: center; margin-bottom: 30px;">⚙️ 선생님 설정 (관리자)</h2>
-        
-        <div class="teacher-section">
-            <h3 style="margin-top:0; color: var(--purple);">🔑 Gemini API Key 저장</h3>
-            <p class="note">선생님의 기기(브라우저)에 API 키를 저장하여 학생들의 이미지 생성을 지원합니다.</p>
-            <div class="setting">
-                <input type="password" id="apiKeyInput" placeholder="발급받은 AI API 키를 입력하세요">
+        <!-- 선생님 영역 -->
+        <div class="teacher-area">
+            <h3 style="color:#95a5a6; cursor:pointer;" onclick="toggleTeacherMode()">⚙️ 선생님 설정 열기/닫기 (비밀번호: 1234)</h3>
+            <div id="teacherLogin" class="hidden" style="margin-bottom: 20px;">
+                <input type="password" id="teacherPw" placeholder="비밀번호 입력">
+                <button onclick="loginTeacher()">확인</button>
             </div>
-            <button class="btn primary" id="saveApiKeyBtn" style="width:100%;">💾 내 브라우저에 API 키 저장</button>
-        </div>
-        
-        <div class="teacher-section">
-            <h3 style="margin-top:0">📸 미션 그림 클라우드 등록 (Firebase 연동)</h3>
-            <p class="note">여기에 등록한 이미지는 공유 링크를 통해 학생들의 화면에 <b>실시간으로 자동 반영</b>됩니다.</p>
-            <div id="missionManagerList" style="margin-top: 20px;"></div>
+            
+            <div id="teacherContent" class="hidden">
+                <div style="background: white; padding: 20px; border-radius: 10px; border: 1px solid var(--border);">
+                    <h4>🔑 API 키 설정</h4>
+                    <input type="password" id="apiKeyInput" placeholder="Gemini API Key" style="width: 300px; padding: 5px;">
+                    <button onclick="saveApiKey()">저장</button>
+                    
+                    <h4 style="margin-top:20px;">📸 미션 그림 Firebase 업로드</h4>
+                    <div id="teacherMissionManager"></div>
+                </div>
+            </div>
         </div>
     </div>
 
     <div id="toast"></div>
 
-    <!-- Firebase SDK 모듈 -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, doc, setDoc, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
-        // 사용자 제공 Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyBT2ueb7MgaSOFDCpiqilGDBSu7-sg5qh4",
             authDomain: "basic-8d846.firebaseapp.com",
@@ -111,242 +242,261 @@
             appId: "1:1027267747986:web:4673ad80ad4015b131464b"
         };
 
-        // Firebase 초기화
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const storage = getStorage(app);
 
-        // UI 유틸리티
-        const el = id => document.getElementById(id);
-        function showToast(msg) {
+        // --- 앱 상태 관리 ---
+        let currentTab = 'A';
+        let currentMission = 1;
+        let unsubscribeStudent = null;
+        
+        // 정답 데이터 (선생님이 DB에서 관리할 수도 있지만, 현재는 데모용 하드코딩)
+        const missionAnswers = {
+            1: { animal: '강아지', item: '모자', color: '빨간', place: '잔디밭' },
+            2: { animal: '고양이', item: '목도리', color: '파란', place: '바닷가' },
+            3: { animal: '강아지', item: '목도리', color: '빨간', place: '바닷가' },
+            4: { animal: '고양이', item: '모자', color: '파란', place: '잔디밭' },
+            5: { animal: '강아지', item: '모자', color: '파란', place: '바닷가' }
+        };
+        
+        let userSelections = { animal: '', item: '', color: '', place: '' };
+
+        // 유틸 함수
+        window.el = id => document.getElementById(id);
+        window.showToast = msg => {
             const toast = el('toast');
             toast.textContent = msg;
             toast.style.display = 'block';
             setTimeout(() => toast.style.display = 'none', 3000);
-        }
+        };
 
-        // Gemini AI 이미지 생성 함수 (Imagen 3 모델 연동)
-        async function generateAIImage(promptText) {
-            let apiKey = localStorage.getItem('Gemini API Key'); 
-            if (!apiKey) {
-                showToast('API 키가 없습니다. 선생님 로그인 후 API 키를 저장해주세요!');
-                return null;
+        // --- 탭 전환 로직 ---
+        window.switchTab = (tab) => {
+            currentTab = tab;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`.tab-btn[data-tab="${tab}"]`).classList.add('active');
+            
+            if(tab === 'A' || tab === 'B') {
+                el('selectionArea').classList.remove('hidden');
+                el('typingArea').classList.add('hidden');
+                updateSummary();
+            } else if (tab === 'C') {
+                el('selectionArea').classList.add('hidden');
+                el('typingArea').classList.remove('hidden');
+                el('summaryText').textContent = "아래에 입력한 내용이 정답으로 확인됩니다.";
             }
             
+            // 결과창 초기화
+            resetResultBox();
+        };
+
+        // --- 선택 로직 (A형, B형) ---
+        window.selectOption = (category, value) => {
+            userSelections[category] = value;
+            
+            // UI 업데이트
+            const buttons = el(`q_${category}`).querySelectorAll('.option-btn');
+            buttons.forEach(btn => btn.classList.remove('selected'));
+            
+            const selectedBtn = Array.from(buttons).find(b => b.innerText.includes(value));
+            if(selectedBtn) selectedBtn.classList.add('selected');
+            
+            updateSummary();
+        };
+
+        function updateSummary() {
+            const { color, item, animal, place } = userSelections;
+            const parts = [];
+            if(color) parts.push(color);
+            if(item) parts.push(item + "(을)를 가진");
+            if(animal) parts.push(animal + "(이)가");
+            if(place) parts.push(place + "에 있어요.");
+            
+            el('summaryText').textContent = parts.length > 0 ? parts.join(" ") : "단어를 선택하거나 문장을 적어 보세요.";
+        }
+
+        // --- 정답 확인 및 2단계 분기 로직 ---
+        window.checkAnswer = () => {
+            let isCorrect = false;
+            let promptText = "";
+            const answer = missionAnswers[currentMission];
+            const resultBox = el('resultBox');
+            
+            if (currentTab === 'A' || currentTab === 'B') {
+                isCorrect = (
+                    userSelections.animal === answer.animal &&
+                    userSelections.item === answer.item &&
+                    userSelections.color === answer.color &&
+                    userSelections.place === answer.place
+                );
+                promptText = el('summaryText').textContent;
+            } else {
+                // C형: 입력 텍스트 내에 핵심 키워드가 모두 포함되어 있는지 검사
+                const text = el('cTypeInput').value;
+                isCorrect = text.includes(answer.animal) && text.includes(answer.item) && 
+                            text.includes(answer.color) && text.includes(answer.place);
+                promptText = text;
+            }
+
+            // 정답/오답 결과에 따른 UI 생성 (버튼 교체 포함)
+            if (isCorrect) {
+                resultBox.innerHTML = `
+                    <div style="font-size: 3em; margin-bottom: 10px;">🎉</div>
+                    <p style="color:var(--success); font-weight:bold; font-size: 1.1em; margin-bottom: 5px;">성공했어요!</p>
+                    <p style="margin-bottom: 15px; color:#555;">목표 그림의 요소들을 완벽하게 찾았습니다.</p>
+                    <button class="btn btn-primary" style="background:#f39c12; font-size:1.1em; padding:15px; width:80%;" onclick="runAI('${promptText}')">✨ 진짜 AI 그림 만들기</button>
+                `;
+            } else {
+                resultBox.innerHTML = `
+                    <div style="font-size: 3em; margin-bottom: 10px;">🤔</div>
+                    <p style="color:var(--danger); font-weight:bold; font-size: 1.1em; margin-bottom: 5px;">앗, 조금 달라요.</p>
+                    <p style="margin-bottom: 15px; color:#555;">목표 그림과 내가 고른 단어를 다시 비교해보세요.</p>
+                    <button class="btn btn-danger" onclick="resetResultBox()">🔄 다시 시도하기</button>
+                `;
+            }
+        };
+
+        window.resetResultBox = () => {
+            el('resultBox').innerHTML = `<p style="color: #666; font-size: 0.9em;">설명한 뒤 정답 확인하기 버튼을 눌러요!</p>`;
+        };
+
+        // --- 진짜 AI 그림 생성 로직 ---
+        window.runAI = async (promptText) => {
+            const resultBox = el('resultBox');
+            resultBox.innerHTML = `
+                <div style="font-size: 2em; margin-bottom: 10px;">⏳</div>
+                <p style="color:var(--primary); font-weight:bold;">AI가 그림을 뚝딱뚝딱 그리고 있어요!</p>
+                <p style="color:#666; font-size:0.9em;">(약 5~10초 정도 걸립니다)</p>
+            `;
+            
+            const apiKey = localStorage.getItem('Gemini API Key');
+            if (!apiKey) {
+                resultBox.innerHTML = `<p style="color:red;">선생님 설정에서 API 키를 먼저 입력해주세요!</p><button class="btn btn-outline" onclick="resetResultBox()">돌아가기</button>`;
+                return;
+            }
+
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=${apiKey}`;
             const enhancedPrompt = `어린이 동화책에 나오는 귀엽고 따뜻한 느낌의 3D 렌더링 일러스트 스타일로 다음 내용을 그려주세요: ${promptText}. 폭력적이거나 복잡한 요소 금지.`;
             
-            const payload = {
-                instances: [{ prompt: enhancedPrompt }],
-                parameters: { sampleCount: 1, aspectRatio: "1:1" }
-            };
-            
             try {
-                showToast("AI가 그림을 그리고 있어요. 잠시만 기다려주세요!");
                 const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({
+                        instances: [{ prompt: enhancedPrompt }],
+                        parameters: { sampleCount: 1, aspectRatio: "1:1" }
+                    })
                 });
 
-                if (!response.ok) {
-                    const errInfo = await response.json();
-                    console.error(errInfo);
-                    throw new Error("이미지 생성 실패");
-                }
+                if (!response.ok) throw new Error("API 요청 실패");
                 const data = await response.json();
                 
                 if (data.predictions && data.predictions.length > 0) {
-                    const base64Image = data.predictions[0].bytesBase64Encoded;
-                    return `data:image/jpeg;base64,${base64Image}`;
+                    const b64 = data.predictions[0].bytesBase64Encoded;
+                    resultBox.innerHTML = `
+                        <p style="color:var(--primary); font-weight:bold; margin:0 0 10px 0;">짠! 내가 설명한 AI 그림이에요 🎨</p>
+                        <img src="data:image/jpeg;base64,${b64}" class="result-img">
+                        <button class="btn btn-outline" style="margin-top:15px;" onclick="resetResultBox()">다시 하기</button>
+                    `;
                 }
             } catch (error) {
-                console.error("AI 오류:", error);
-                showToast("그림을 그리는 중 문제가 발생했어요!");
-                return null;
-            }
-        }
-
-        // 학생 화면 실시간 연동 (Firebase Firestore)
-        let currentUnsubscribe = null;
-        function loadStudentMission(missionId) {
-            if (currentUnsubscribe) {
-                currentUnsubscribe(); // 이전 미션 구독 취소
-            }
-            
-            const container = el('targetImageContainer');
-            container.innerHTML = "<p>클라우드에서 그림을 불러오는 중...</p>";
-
-            // Firestore 문서 실시간 구독
-            currentUnsubscribe = onSnapshot(doc(db, "missions", `mission_${missionId}`), (docSnap) => {
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    container.innerHTML = `<img src="${data.imageUrl}" style="max-width:100%; max-height:400px; border-radius:10px; box-shadow:0 4px 8px rgba(0,0,0,0.1);">`;
-                } else {
-                    container.innerHTML = `<p class="note" style="color:#e74c3c;">아직 선생님이 이 미션의 그림을 등록하지 않았어요.</p>`;
-                }
-            }, (error) => {
-                console.error("Firebase 읽기 에러:", error);
-                container.innerHTML = `<p class="note" style="color:#e74c3c;">Firebase 권한 에러: 보안 규칙(Rules)을 확인해주세요.</p>`;
-            });
-        }
-
-        // 선생님 화면 미션 관리자 렌더링
-        function renderMissionManager() {
-            const container = el('missionManagerList');
-            container.innerHTML = '';
-            
-            for (let i = 1; i <= 5; i++) {
-                const missionDiv = document.createElement('div');
-                missionDiv.style.border = '1px solid #eee';
-                missionDiv.style.padding = '15px';
-                missionDiv.style.borderRadius = '8px';
-                missionDiv.style.marginBottom = '15px';
-                missionDiv.style.background = '#fafafa';
-                
-                missionDiv.innerHTML = `
-                    <h4 style="margin-top: 0; margin-bottom: 10px;">미션 ${i} 목표 그림</h4>
-                    <div id="teacher_preview_${i}" style="min-height: 50px;">불러오는 중...</div>
-                    <div style="margin-top: 15px; display: flex; gap: 10px; align-items: center;">
-                        <input type="file" id="upload_mission_${i}" accept="image/*" style="flex: 1;">
-                        <button class="btn primary btn-upload" data-id="${i}" style="padding: 8px 15px; font-size: 0.9em;">클라우드 등록</button>
-                        <button class="btn danger btn-delete" data-id="${i}" style="padding: 8px 15px; font-size: 0.9em;">삭제</button>
-                    </div>
-                `;
-                container.appendChild(missionDiv);
-
-                // 선생님 화면에도 실시간 상태 표시
-                onSnapshot(doc(db, "missions", `mission_${i}`), (docSnap) => {
-                    const preview = el(`teacher_preview_${i}`);
-                    if (docSnap.exists()) {
-                        preview.innerHTML = `<img src="${docSnap.data().imageUrl}" style="max-width: 150px; border-radius: 5px; display: block; box-shadow:0 2px 4px rgba(0,0,0,0.1);">`;
-                    } else {
-                        preview.innerHTML = `<span class="note" style="color: #e74c3c;">등록된 그림이 없습니다. (학생 화면 빈칸)</span>`;
-                    }
-                });
-            }
-
-            // 업로드 버튼 이벤트
-            container.querySelectorAll('.btn-upload').forEach(btn => {
-                btn.onclick = async (e) => {
-                    const id = e.target.getAttribute('data-id');
-                    const fileInput = el(`upload_mission_${id}`);
-                    if (!fileInput.files.length) {
-                        showToast('업로드할 그림 파일을 선택해주세요.');
-                        return;
-                    }
-                    
-                    showToast(`미션 ${id} 클라우드 업로드 중... 잠시만 기다려주세요.`);
-                    const file = fileInput.files[0];
-                    const storageRef = ref(storage, `missions/mission_${id}`);
-                    
-                    try {
-                        // Storage에 파일 업로드
-                        await uploadBytes(storageRef, file);
-                        // 업로드된 파일의 다운로드 URL 가져오기
-                        const imageUrl = await getDownloadURL(storageRef);
-                        // Firestore에 URL 저장 (학생 화면과 연동됨)
-                        await setDoc(doc(db, "missions", `mission_${id}`), {
-                            id: id,
-                            imageUrl: imageUrl,
-                            updatedAt: new Date().toISOString()
-                        }, { merge: true });
-                        
-                        showToast(`✅ 미션 ${id} 그림이 학생들에게 공유되었습니다!`);
-                        fileInput.value = ""; // 파일 입력창 초기화
-                    } catch (err) {
-                        console.error(err);
-                        showToast("업로드 실패: Firebase Storage 보안 규칙을 확인해주세요.");
-                    }
-                };
-            });
-
-            // 삭제 버튼 이벤트
-            container.querySelectorAll('.btn-delete').forEach(btn => {
-                btn.onclick = async (e) => {
-                    const id = e.target.getAttribute('data-id');
-                    if(!confirm(`미션 ${id} 이미지를 삭제할까요? (학생 화면에서도 사라집니다)`)) return;
-                    
-                    try {
-                        // Firestore 문서 삭제
-                        await deleteDoc(doc(db, "missions", `mission_${id}`));
-                        // Storage 파일 삭제
-                        const storageRef = ref(storage, `missions/mission_${id}`);
-                        await deleteObject(storageRef).catch(e => console.log("이미지 파일이 이미 없거나 삭제 에러", e));
-                        
-                        showToast(`미션 ${id} 그림이 삭제되었습니다.`);
-                    } catch (err) {
-                        console.error(err);
-                        showToast("삭제 실패: 권한을 확인해주세요.");
-                    }
-                };
-            });
-        }
-
-        // 초기화 및 이벤트 리스너 세팅
-        window.onload = () => {
-            // 1. 학생 미션 선택 리스너 (Firebase 연동)
-            const studentSelect = el('studentMissionSelect');
-            if(studentSelect) {
-                studentSelect.onchange = e => loadStudentMission(e.target.value);
-                loadStudentMission(studentSelect.value); // 첫 로딩 시 미션 1 호출
-            }
-
-            // 2. 학생 그림 그리기 테스트 버튼 (Gemini API 연동)
-            const runMissionBtn = el('runMissionBtn');
-            if(runMissionBtn) {
-                runMissionBtn.onclick = async () => {
-                    // 실제 웹앱에서는 학생들이 조합한 텍스트를 이곳에 넣습니다.
-                    const promptText = "파란 모자를 쓰고 숲속을 걷는 귀여운 곰돌이"; 
-                    
-                    el('imageResult').innerHTML = '<p class="note">AI가 상상하며 그리는 중... 🎨</p>';
-                    const imageUrl = await generateAIImage(promptText);
-                    
-                    if (imageUrl) {
-                        el('imageResult').innerHTML = `<img src="${imageUrl}" alt="AI 생성 이미지" style="max-width:100%; max-height:400px; border-radius:10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">`;
-                        showToast("비슷한가요? 목표 그림과 비교해 보세요!");
-                    } else {
-                        el('imageResult').innerHTML = '<p class="note" style="color:red;">이미지를 그리지 못했습니다.</p>';
-                    }
-                };
-            }
-
-            // 3. 선생님 로그인 처리
-            const pwBtn = el('pwBtn');
-            if(pwBtn) {
-                pwBtn.onclick = () => {
-                    const pwInput = el('teacherPw');
-                    if(pwInput && pwInput.value === '1234') { // 비밀번호: 1234
-                        el('teacherLogin').style.display = 'none';
-                        el('teacherContent').style.display = 'block';
-                        
-                        // 기존에 저장된 API 키가 있다면 불러오기
-                        const savedKey = localStorage.getItem('Gemini API Key');
-                        if(savedKey) el('apiKeyInput').value = savedKey;
-                        
-                        renderMissionManager();
-                        showToast('선생님 모드로 로그인되었습니다.');
-                    } else {
-                        showToast('비밀번호가 틀렸습니다.');
-                    }
-                };
-            }
-
-            // 4. API 키 로컬 저장 처리
-            const saveApiKeyBtn = el('saveApiKeyBtn');
-            if(saveApiKeyBtn) {
-                saveApiKeyBtn.onclick = () => {
-                    const key = el('apiKeyInput').value.trim();
-                    if(key) {
-                        localStorage.setItem('Gemini API Key', key);
-                        showToast('✅ Gemini API Key가 안전하게 저장되었습니다!');
-                    } else {
-                        localStorage.removeItem('Gemini API Key');
-                        showToast('API 키가 삭제되었습니다.');
-                    }
-                };
+                resultBox.innerHTML = `<p style="color:red;">그림을 그리다 오류가 났어요!</p><button class="btn btn-danger" onclick="resetResultBox()">돌아가기</button>`;
             }
         };
+
+        // --- Firebase 실시간 동기화 (학생 화면) ---
+        function loadMissionImage(missionId) {
+            currentMission = parseInt(missionId);
+            const container = el('targetImageContainer');
+            container.innerHTML = "<p>클라우드에서 그림을 불러오는 중...</p>";
+            
+            // 기존 선택 내역 초기화
+            userSelections = { animal: '', item: '', color: '', place: '' };
+            document.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('selected'));
+            el('cTypeInput').value = "";
+            updateSummary();
+            resetResultBox();
+
+            if (unsubscribeStudent) unsubscribeStudent();
+
+            unsubscribeStudent = onSnapshot(doc(db, "missions", `mission_${missionId}`), (docSnap) => {
+                if (docSnap.exists()) {
+                    container.innerHTML = `<img src="${docSnap.data().imageUrl}">`;
+                } else {
+                    container.innerHTML = `<p style="color:var(--danger);">선생님이 아직 이 미션의 목표 그림을 올리지 않았어요.</p>`;
+                }
+            });
+        }
+
+        el('missionSelect').onchange = (e) => loadMissionImage(e.target.value);
+        
+        // --- 선생님 관리자 로직 ---
+        window.toggleTeacherMode = () => {
+            el('teacherLogin').classList.toggle('hidden');
+        };
+
+        window.loginTeacher = () => {
+            if(el('teacherPw').value === '1234') {
+                el('teacherLogin').classList.add('hidden');
+                el('teacherContent').classList.remove('hidden');
+                
+                const savedKey = localStorage.getItem('Gemini API Key');
+                if(savedKey) el('apiKeyInput').value = savedKey;
+                renderTeacherMissions();
+            } else {
+                showToast("비밀번호가 틀렸습니다.");
+            }
+        };
+
+        window.saveApiKey = () => {
+            const key = el('apiKeyInput').value.trim();
+            if(key) {
+                localStorage.setItem('Gemini API Key', key);
+                showToast("API 키 저장 완료!");
+            }
+        };
+
+        function renderTeacherMissions() {
+            const container = el('teacherMissionManager');
+            container.innerHTML = '';
+            for (let i = 1; i <= 5; i++) {
+                const div = document.createElement('div');
+                div.style = "margin-top: 15px; padding: 15px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 5px;";
+                div.innerHTML = `
+                    <strong>미션 ${i}</strong>
+                    <div id="t_preview_${i}" style="margin: 10px 0; color:#888;">상태 확인 중...</div>
+                    <input type="file" id="t_file_${i}" accept="image/*">
+                    <button id="t_btn_${i}">Firebase에 업로드</button>
+                `;
+                container.appendChild(div);
+
+                onSnapshot(doc(db, "missions", `mission_${i}`), (docSnap) => {
+                    const prev = el(`t_preview_${i}`);
+                    if (docSnap.exists()) {
+                        prev.innerHTML = `<img src="${docSnap.data().imageUrl}" style="max-height:80px; border-radius:5px;"> <span style="color:green">✅ 업로드됨</span>`;
+                    } else {
+                        prev.innerHTML = "❌ 등록된 이미지 없음";
+                    }
+                });
+
+                el(`t_btn_${i}`).onclick = async () => {
+                    const fileInput = el(`t_file_${i}`);
+                    if (!fileInput.files.length) return showToast("파일을 선택하세요!");
+                    showToast(`미션 ${i} 업로드 중...`);
+                    
+                    const file = fileInput.files[0];
+                    const storageRef = ref(storage, `missions/mission_${i}`);
+                    await uploadBytes(storageRef, file);
+                    const url = await getDownloadURL(storageRef);
+                    await setDoc(doc(db, "missions", `mission_${i}`), { imageUrl: url });
+                    showToast(`미션 ${i} 업로드 성공!`);
+                };
+            }
+        }
+
+        // 초기 실행
+        window.onload = () => loadMissionImage(1);
     </script>
 </body>
 </html>
