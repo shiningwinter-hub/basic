@@ -29,12 +29,28 @@
 }
 
 async function generateAIImage(promptText) {
-    const apiKey = localStorage.getItem('Gemini API Key'); 
+    // 1. 빌드 도구(Webpack, Vite 등) 환경변수에서 읽기 시도
+    let apiKey = '';
+    try {
+        if (typeof process !== 'undefined' && process.env && process.env.GEMINI_API_KEY) {
+            apiKey = process.env.GEMINI_API_KEY;
+        }
+    } catch(e) {}
+    
+    // 2. 환경변수가 없으면 기기의 로컬 스토리지에서 읽기
     if (!apiKey) {
-        showToast('선생님 설정에서 Gemini API Key를 먼저 등록해주세요!');
+        apiKey = localStorage.getItem('Gemini API Key'); 
+    }
+
+    if (!apiKey) {
+        showToast('API 키가 없습니다. 선생님 설정이나 환경변수(GEMINI_API_KEY)를 확인해주세요!');
         throw new Error("API Key is missing");
     }
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-image:generateContent?key=${apiKey}`;
+    
+    // [보안 권장] Vercel 배포 시, API 키를 브라우저 네트워크탭에 완전히 숨기려면
+    // 깃허브 저장소 루트에 /api/gemini.js (서버리스 함수)를 만들고 Vercel에 키를 등록한 뒤,
+    // 아래의 fetch 요청 경로를 직접 만든 서버리스 API 주소(예: '/api/gemini')로 변경하여 사용하세요.
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent?key=${apiKey}`;
     
     const enhancedPrompt = `어린이 동화책에 나오는 귀엽고 따뜻한 느낌의 3D 렌더링 일러스트 스타일로 다음 내용을 그려주세요: ${promptText}. 폭력적이거나 복잡한 요소 금지.`;
     
@@ -54,10 +70,27 @@ async function generateAIImage(promptText) {
                 if(loginDiv) loginDiv.style.display = 'none';
                 if(contentDiv) contentDiv.style.display = 'block';
                 
-                // 저장된 API 키 불러오기
-                const savedApiKey = localStorage.getItem('Gemini API Key');
+                // 저장된 API 키 또는 환경변수(우선순위) 불러오기
+                let savedApiKey = '';
+                try {
+                    if (typeof process !== 'undefined' && process.env && process.env.GEMINI_API_KEY) {
+                        savedApiKey = process.env.GEMINI_API_KEY;
+                    }
+                } catch(e) {}
+                
+                if (!savedApiKey) {
+                    savedApiKey = localStorage.getItem('Gemini API Key');
+                }
+
                 const apiKeyInput = el('apiKeyInput');
-                if(savedApiKey && apiKeyInput) apiKeyInput.value = savedApiKey;
+                if(apiKeyInput) {
+                    apiKeyInput.value = savedApiKey || '';
+                    if (savedApiKey && typeof process !== 'undefined' && process.env && process.env.GEMINI_API_KEY) {
+                        // 환경변수로 키가 로드된 경우 수정 불가능하도록 처리
+                        apiKeyInput.placeholder = "환경변수(GEMINI_API_KEY) 적용 중";
+                        apiKeyInput.disabled = true;
+                    }
+                }
                 
                 renderMissionManager();
                 showToast('선생님 모드로 로그인되었습니다.');
