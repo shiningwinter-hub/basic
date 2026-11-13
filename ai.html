@@ -1,0 +1,844 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI 그림 탐정단</title>
+<style>
+:root{--purple:#806bda;--pale:#f4efff;--ink:#292541;--border:#e8e2f2}
+*{box-sizing:border-box}
+body{font:18px/1.5 "Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;color:var(--ink);background:linear-gradient(140deg,#faf5ff,#f4fcff);margin:0}
+button,textarea,select,input{font:inherit}
+button{cursor:pointer; transition: transform 0.1s, box-shadow 0.1s;}
+button:active{transform:scale(0.98)}
+button:disabled{opacity:0.6; cursor:not-allowed;}
+button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px solid #f6af42;outline-offset:3px}
+.wrap{max-width:1200px;margin:auto;padding:20px;position:relative;}
+.hero{text-align:center;background:linear-gradient(110deg,#eee5ff,#fff2d9);padding:22px;border-radius:24px;margin-bottom:18px}
+.hero h1{margin:0;font-size:32px}.hero p{margin:5px 0}
+.modes{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.mode{background:white;text-align:left;border:3px solid var(--border);border-radius:19px;padding:14px;font-weight:bold;min-height:94px}
+.mode.on{border-color:var(--purple);background:var(--pale)}
+.mode b{font-size:20px}.mode small{display:block;color:#6c657c;font-weight:normal}
+.columns{display:grid;grid-template-columns:1fr 1fr;gap:17px}
+.panel{background:white;padding:20px;border:2px solid var(--border);border-radius:22px;box-shadow:0 12px 28px #3f37730c; display:flex; flex-direction:column;}
+h2{font-size:22px;margin:0 0 12px}
+.scene{aspect-ratio:5/3;background:#f4f1fa;border-radius:18px;overflow:hidden;margin-bottom:8px; position:relative;}
+.scene svg, .scene img{width:100%;height:100%;display:block;object-fit:cover;}
+.empty{height:100%;display:grid;place-items:center;color:#756b8c;text-align:center;padding:20px;}
+.spinner{border:4px solid #e8e2f2;border-top-color:#806bda;border-radius:50%;width:40px;height:40px;animation:spin 1s linear infinite;margin:0 auto 10px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+.btn{border:2px solid var(--border);border-radius:14px;padding:10px 14px;background:white;font-weight:bold;color:var(--ink);min-height:47px}
+.btn.primary{background:var(--purple);border-color:var(--purple);color:white}
+.btn.green{background:#169764;border-color:#169764;color:white}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.row>*{flex:1}
+.group{margin:13px 0 18px}
+.group h3{margin:0 0 7px;font-size:18px}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pick{min-height:69px;border:3px solid var(--border);border-radius:15px;background:#fff;font-weight:700;padding:8px}
+.pick.on{border-color:var(--purple);background:var(--pale)}
+.pick span{font-size:27px;display:block}
+.word{border:2px solid var(--border);border-radius:12px;padding:9px 13px;background:white}
+.word.on{background:var(--pale);border-color:var(--purple)}
+.bubble{background:var(--pale);border:2px solid #e4dafa;padding:14px;border-radius:14px;font-weight:700;min-height:85px}
+.bubble small{display:block;color:#685c82;font-weight:normal}
+textarea{width:100%;border:2px solid var(--border);border-radius:13px;padding:13px;min-height:130px;resize:vertical;font-size:19px}
+.feedback{background:#f1f9f5;padding:14px;border-radius:16px;margin-top:12px}
+.feedback strong{display:block;margin-bottom:4px}
+.note{font-size:14px;color:#716b80;margin:8px 0}
+.counter{font-weight:700;color:#6f5fc1;margin-bottom:12px}
+details{background:white;border:2px solid var(--border);padding:15px;border-radius:18px;margin-top:19px}
+summary{font-weight:bold;cursor:pointer;font-size:20px;}
+select, input{border:2px solid var(--border);border-radius:9px;padding:8px;background:white}
+.setting{display:flex;flex-wrap:wrap;gap:15px;margin:12px 0}
+.setting label{display:grid;gap:5px;font-size:15px; flex:1; min-width:140px;}
+.wordlist{display:flex;flex-wrap:wrap;gap:8px}
+.success{background:#fff2cf;padding:15px;border-radius:14px}
+.footer{text-align:center;color:#77708b;font-size:13px;margin-top:15px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#333;color:white;padding:12px 24px;border-radius:30px;font-weight:bold;opacity:0;pointer-events:none;transition:opacity 0.3s;z-index:1000;box-shadow:0 4px 12px rgba(0,0,0,0.2);}
+.toast.show{opacity:1}
+.teacher-section{border-top:2px dashed var(--border); margin-top:15px; padding-top:15px;}
+@media(max-width:750px){
+    .columns{grid-template-columns:1fr}
+    .wrap{padding:10px}.panel{padding:14px}
+    .modes{grid-template-columns:1fr}
+    .mode{min-height:70px;padding:10px}
+    .hero h1{font-size:26px}
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+    <header class="hero">
+        <h1>🕵️ AI 그림 탐정단</h1>
+        <p>보고 👀 · 말하고 💬 · 정답을 맞혀 AI 그림을 선물 받아요! 🎨</p>
+        <div class="row" style="justify-content:center; max-width:400px; margin:10px auto 0;">
+            <button class="btn" id="guide">🔊 안내 듣기</button>
+            <button class="btn" id="restart">↺ 처음부터</button>
+        </div>
+    </header>
+
+    <div class="counter" id="counter"></div>
+    <nav class="modes" aria-label="학습 모드">
+        <button class="mode on" data-mode="A">🧩 <b>A형 · 그림 선택</b><small>그림 카드를 눌러 설명해요</small></button>
+        <button class="mode" data-mode="B">📝 <b>B형 · 단어 조합</b><small>단어를 골라 문장을 만들어요</small></button>
+        <button class="mode" data-mode="C">🎤 <b>C형 · 말하기·쓰기</b><small>직접 말하거나 적어요</small></button>
+    </nav>
+
+    <div class="columns">
+        <section class="panel">
+            <h2>👀 ① 목표 그림을 살펴봐요</h2>
+            <div class="scene" id="target" role="img" aria-label="목표 그림"></div>
+            <p id="description" class="note"></p>
+            
+            <h2 style="margin-top:22px">🎨 ③ 내가 찾은 결과 확인</h2>
+            <div class="scene" id="result">
+                <div class="empty">🎨<br>설명을 만든 뒤 '정답 확인하기'를 눌러요!</div>
+            </div>
+            <div id="feedback" aria-live="polite"></div>
+        </section>
+
+        <section class="panel">
+            <h2>✏️ ② 그림을 설명해요</h2>
+            <div id="inputArea" style="flex:1"></div>
+            
+            <div class="bubble" style="margin-top:10px;">
+                <small>내가 만든 설명</small>
+                <span id="phrase"></span>
+            </div>
+            
+            <div class="row">
+                <button id="speak" class="btn">🔊 설명 듣기</button>
+                <button id="checkBtn" class="btn primary">🔍 정답 확인하기</button>
+                <button id="draw" class="btn primary" hidden>✨ 진짜 AI 그림 만들기</button>
+            </div>
+            
+            <div class="row">
+                <button id="hint" class="btn">💡 힌트</button>
+                <button id="next" class="btn green" hidden>다음 미션 ➜</button>
+            </div>
+            <div id="hintArea" aria-live="polite"></div>
+            
+            <div class="feedback" style="background:#fff7e6; margin-top:auto;">
+                <strong>🌷 천천히 해도 괜찮아요!</strong>
+                설명이 맞는지 확인하고, 완벽하면 멋진 AI 그림을 선물 받을 수 있어요!
+            </div>
+        </section>
+    </div>
+
+    <details id="teacherDetails">
+        <summary>👩‍🏫 선생님 설정 & 미션 추가</summary>
+        
+        <!-- 로그인 영역 -->
+        <div id="teacherLogin" style="padding: 20px; text-align: center; border-top:2px dashed var(--border); margin-top:15px;">
+            <p style="margin-top:0;"><strong>선생님 전용 메뉴입니다.</strong></p>
+            <input type="password" id="teacherPw" placeholder="비밀번호 입력" style="width:200px; text-align:center; padding:10px;">
+            <button id="pwBtn" class="btn primary" style="padding: 10px 20px; min-height:0;">확인</button>
+            <p class="note">초기 비밀번호: 1234</p>
+        </div>
+
+        <!-- 설정 영역 (로그인 후 표시) -->
+        <div id="teacherContent" style="display: none; border-top:2px dashed var(--border); margin-top:15px; padding-top:15px;">
+            <div class="setting">
+                <label style="flex:100%">바로가기 미션 선택
+                    <select id="missionSelect"></select>
+                </label>
+            </div>
+            
+            <div class="teacher-section" style="border-top: none; margin-top:5px; padding-top:5px;">
+                <h3 style="margin-top:0">📸 단계별 목표 그림(이미지) 직접 등록</h3>
+                <p class="note">미션별 목표 그림을 확인하고 원하시는 사진으로 변경할 수 있습니다.</p>
+                <div id="missionManagerList"></div>
+            </div>
+
+            <div class="teacher-section">
+                <h3 style="margin-top:0">➕ 새로운 커스텀 미션 만들기</h3>
+                <p class="note">학생들에게 보여줄 새로운 목표 그림의 특징을 설정해주세요.</p>
+                
+                <div class="setting">
+                    <label style="flex:100%">새 미션 목표 그림 이미지 (선택)
+                        <input type="file" id="t_img" accept="image/*" style="font-size:15px;">
+                    </label>
+                </div>
+                
+                <div class="setting">
+                    <label>정답 동물 <input type="text" id="t_a_c" placeholder="예: 코끼리"></label>
+                    <label>오답 동물 <input type="text" id="t_a_w" placeholder="예: 사자"></label>
+                </div>
+                <div class="setting">
+                    <label>정답 색깔 <input type="text" id="t_c_c" placeholder="예: 하늘색"></label>
+                    <label>오답 색깔 <input type="text" id="t_c_w" placeholder="예: 분홍색"></label>
+                </div>
+                <div class="setting">
+                    <label>정답 물건 <input type="text" id="t_i_c" placeholder="예: 안경"></label>
+                    <label>오답 물건 <input type="text" id="t_i_w" placeholder="예: 신발"></label>
+                </div>
+                <div class="setting">
+                    <label>정답 장소 <input type="text" id="t_p_c" placeholder="예: 놀이터"></label>
+                    <label>오답 장소 <input type="text" id="t_p_w" placeholder="예: 우주선"></label>
+                </div>
+                <div class="setting">
+                    <label style="flex:100%">선생님의 미션 힌트 메시지
+                        <input type="text" id="t_desc" placeholder="예: 코끼리가 어디서 무엇을 쓰고 있는지 찾아보세요!">
+                    </label>
+                </div>
+                <button class="btn primary" id="addMissionBtn" style="width:100%; margin-top:10px;">💾 새로운 미션 등록하기</button>
+            </div>
+        </div>
+    </details>
+
+    <div class="footer">특수교육 프롬프트 학습용 웹앱 · AI Image Generation 연동 버전</div>
+</main>
+
+<div id="toast" class="toast">메시지</div>
+
+<script>
+// --- 데이터 및 상태 관리 ---
+const initialMissions = [
+    ['강아지','고양이','빨간','파란','모자','목도리','잔디밭','바닷가','모자의 색깔과 강아지가 있는 곳을 찾아보세요.', null],
+    ['고양이','강아지','파란','노란','목도리','모자','눈밭','잔디밭','고양이가 하고 있는 것과 장소를 찾아보세요.', null],
+    ['토끼','강아지','노란','빨간','풍선','모자','꽃밭','바닷가','토끼가 들고 있는 것을 찾아보세요.', null],
+    ['공룡','토끼','보라','초록','모자','풍선','숲','눈밭','공룡의 모자와 뒤쪽 풍경을 살펴보세요.', null],
+    ['코끼리','사자','하늘색','분홍색','안경','신발','놀이터','우주선','코끼리가 어디서 어떤 안경을 끼고 있는지 찾아보세요.', null]
+];
+
+let missions = [...initialMissions];
+const keys = ['animal','color','item','place'];
+
+const getIcon = (word) => {
+    if (!word) return '✨';
+    const w = word.replace('색', ''); 
+    const icons = {
+        강아지:'🐶',고양이:'🐱',토끼:'🐰',공룡:'🦕',사자:'🦁',호랑이:'🐯',코끼리:'🐘',곰:'🐻',돼지:'🐷',원숭이:'🐵',여우:'🦊',
+        모자:'🎩',목도리:'🧣',풍선:'🎈',안경:'👓',신발:'👟',가방:'🎒',우산:'☂️',장갑:'🧤',시계:'⌚',
+        잔디밭:'🌱',바닷가:'🏖️',눈밭:'❄️',꽃밭:'🌸',숲:'🌳',우주선:'🚀',놀이터:'🛝',학교:'🏫',집:'🏠',병원:'🏥'
+    };
+    if (icons[w]) return icons[w];
+    if (icons[word]) return icons[word];
+    
+    if(word.includes('빨간')||word.includes('빨강')||word.includes('레드')) return '❤️';
+    if(word.includes('주황')||word.includes('오렌지')) return '🧡';
+    if(word.includes('노란')||word.includes('노랑')||word.includes('옐로')) return '💛';
+    if(word.includes('초록')||word.includes('그린')||word.includes('연두')) return '💚';
+    if(word.includes('하늘')||word.includes('스카이')) return '🩵';
+    if(word.includes('파란')||word.includes('파랑')||word.includes('블루')) return '💙';
+    if(word.includes('보라')||word.includes('퍼플')) return '💜';
+    if(word.includes('분홍')||word.includes('핑크')) return '🩷';
+    if(word.includes('까만')||word.includes('검정')||word.includes('검은')||word.includes('블랙')) return '🖤';
+    if(word.includes('하얀')||word.includes('하양')||word.includes('흰')||word.includes('화이트')) return '🤍';
+    if(word.includes('갈색')||word.includes('브라운')) return '🤎';
+    if(word.includes('회색')||word.includes('그레이')) return '🩶';
+
+    return '✨';
+};
+
+const palette = {
+    빨간:'#f06475', 빨강:'#f06475', 빨간색:'#f06475', 빨강색:'#f06475', 레드:'#f06475',
+    주황:'#ffa502', 주황색:'#ffa502', 오렌지:'#ffa502',
+    노란:'#ffcf55', 노랑:'#ffcf55', 노란색:'#ffcf55', 노랑색:'#ffcf55', 옐로:'#ffcf55',
+    초록:'#66c093', 초록색:'#66c093', 연두:'#a2d98d', 연두색:'#a2d98d', 그린:'#66c093',
+    하늘:'#87ceeb', 하늘색:'#87ceeb', 스카이:'#87ceeb',
+    파란:'#6b9bf0', 파랑:'#6b9bf0', 파란색:'#6b9bf0', 파랑색:'#6b9bf0', 블루:'#6b9bf0',
+    보라:'#a77add', 보라색:'#a77add', 퍼플:'#a77add',
+    분홍:'#ffb6c1', 분홍색:'#ffb6c1', 핑크:'#ffb6c1', 핑크색:'#ffb6c1',
+    까만:'#333333', 까만색:'#333333', 검정:'#333333', 검정색:'#333333', 검은:'#333333', 검은색:'#333333', 블랙:'#333333',
+    하얀:'#ffffff', 하얀색:'#ffffff', 하양:'#ffffff', 하양색:'#ffffff', 흰:'#ffffff', 흰색:'#ffffff', 화이트:'#ffffff',
+    갈색:'#8b4513', 브라운:'#8b4513',
+    회색:'#b2bec3', 그레이:'#b2bec3'
+};
+
+const el = id => document.getElementById(id);
+let level = 0, mode = 'A', picked = {}, chosen = new Set(), free = '';
+
+const mission = () => missions[level];
+const correct = () => Object.fromEntries(keys.map((k,i)=>[k,mission()[i*2]]));
+const alternative = () => Object.fromEntries(keys.map((k,i)=>[k,mission()[i*2+1]]));
+
+function showToast(msg) {
+    const t = el('toast');
+    if(!t) return;
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function svg(d){
+    let place = d.place || '잔디밭', c = palette[d.color] || '#87ceeb', a = d.animal || '코끼리', item = d.item || '안경';
+    const str = `stroke="#2d3436" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"`;
+    
+    let bg = `<rect width="600" height="350" fill="#81ecec"/><path d="M-50 250 Q150 220 300 250 T650 250 L650 350 L-50 350 Z" fill="#55efc4" ${str}/>`;
+    if(place==='눈밭') bg = `<rect width="600" height="350" fill="#a29bfe"/><path d="M-50 250 Q150 220 300 250 T650 250 L650 350 L-50 350 Z" fill="#dfe6e9" ${str}/>`;
+    else if(place==='꽃밭') bg = `<rect width="600" height="350" fill="#fdcb6e"/><path d="M-50 250 Q150 220 300 250 T650 250 L650 350 L-50 350 Z" fill="#55efc4" ${str}/>`;
+    else if(place==='숲') bg = `<rect width="600" height="350" fill="#55efc4"/><path d="M-50 260 Q150 230 300 260 T650 260 L650 350 L-50 350 Z" fill="#00cec9" ${str}/>`;
+    else if(place==='놀이터') bg = `<rect width="600" height="350" fill="#81ecec"/><path d="M-50 250 Q150 230 300 250 T650 250 L650 350 L-50 350 Z" fill="#ffeaa7" ${str}/>`;
+
+    let face = `<circle cx="300" cy="190" r="80" fill="#f3c69f" ${str}/>`;
+    if(a==='코끼리') face = `<path d="M240 190 C150 140 150 290 240 240 Z" fill="#b2bec3" ${str}/><path d="M360 190 C450 140 450 290 360 240 Z" fill="#b2bec3" ${str}/><circle cx="300" cy="190" r="80" fill="#dfe6e9" ${str}/><path d="M280 210 L320 210 Q330 280 280 300 Q260 300 260 280 Q280 290 300 280 Q300 240 280 210" fill="#dfe6e9" ${str}/>`;
+    else if(a==='고양이') face = `<circle cx="300" cy="190" r="80" fill="#ffeaa7" ${str}/>`;
+    else if(a==='토끼') face = `<circle cx="300" cy="190" r="80" fill="#fff" ${str}/>`;
+    else if(a==='공룡') face = `<circle cx="300" cy="200" r="75" fill="#00b894" ${str}/>`;
+
+    let eyes = `<circle cx="265" cy="175" r="8" fill="#2d3436"/><circle cx="335" cy="175" r="8" fill="#2d3436"/><circle cx="262" cy="172" r="2" fill="#fff"/><circle cx="332" cy="172" r="2" fill="#fff"/>`;
+    
+    let accessory = `<ellipse cx="300" cy="100" rx="50" ry="15" fill="${c}" ${str}/>`;
+    if(item==='안경') accessory = `<circle cx="265" cy="175" r="22" fill="none" stroke="${c}" stroke-width="8"/><circle cx="335" cy="175" r="22" fill="none" stroke="${c}" stroke-width="8"/><line x1="287" y1="175" x2="313" y2="175" stroke="${c}" stroke-width="8"/>`;
+    else if(item==='목도리') accessory = `<rect x="230" y="260" width="140" height="30" rx="15" fill="${c}" ${str}/>`;
+    else if(item==='풍선') accessory = `<ellipse cx="300" cy="80" rx="35" ry="45" fill="${c}" ${str}/>`;
+
+    return `<svg viewBox="0 0 600 350" xmlns="http://www.w3.org/2000/svg" role="img"><title>${a} ${d.color} ${item} ${place}</title>
+        <ellipse cx="300" cy="335" rx="110" ry="15" fill="#000" opacity="0.1"/>
+        ${bg}${face}${eyes}${accessory}
+    </svg>`;
+}
+
+function sentence(d) {
+    if(!d.place && !d.color && !d.item && !d.animal) return '';
+    return `${d.place||'어딘가'}에 ${d.color||''} ${d.item||'특징'}을 가진 ${d.animal||'동물'}가 있어요.`.replace(/\s+/g,' ').trim();
+}
+
+function getText() {
+    if(mode==='C') return free;
+    if(mode==='A') return sentence(picked);
+    
+    let d = {};
+    const c = correct(), alt = alternative();
+    keys.forEach(k => {
+        let found = [c[k], alt[k]].find(x => chosen.has(x));
+        if(found) d[k] = found;
+    });
+    return Object.keys(d).length ? sentence(d) : '';
+}
+
+function updateText() {
+    const text = getText();
+    const phraseEl = el('phrase');
+    if(phraseEl) phraseEl.textContent = text || '단어를 선택하거나 문장을 적어 보세요.';
+    
+    const checkBtn = el('checkBtn');
+    if (checkBtn && checkBtn.hidden) {
+        checkBtn.hidden = false;
+        const drawBtn = el('draw');
+        const nextBtn = el('next');
+        const feedbackEl = el('feedback');
+        const resultEl = el('result');
+        if(drawBtn) drawBtn.hidden = true;
+        if(nextBtn) nextBtn.hidden = true;
+        if(feedbackEl) feedbackEl.innerHTML = '';
+        if(resultEl) resultEl.innerHTML = '<div class="empty">🎨<br>설명을 수정한 뒤 다시 정답을 확인해요!</div>';
+    }
+}
+
+function renderInput() {
+    const c = correct(), alt = alternative(), a = el('inputArea');
+    if(!a) return;
+    a.innerHTML = '';
+    
+    if(mode==='A'){
+        const renderOrder = ['animal', 'item', 'color', 'place'];
+        const qs = {
+            'animal': '① 어떤 동물인가요?',
+            'item': '② 무엇을 가지고 있나요?',
+            'color': '③ 어떤 색깔인가요?',
+            'place': '④ 어디에 있나요?'
+        };
+        
+        renderOrder.forEach(k => {
+            const g = document.createElement('div');
+            g.className = 'group';
+            g.innerHTML = `<h3>${qs[k]}</h3><div class="choices"></div>`;
+            [c[k], alt[k]].forEach(v => {
+                const b = document.createElement('button');
+                b.className = 'pick' + (picked[k]===v ? ' on' : '');
+                b.innerHTML = `<span>${getIcon(v)}</span>${v}`;
+                b.onclick = () => { picked[k] = v; renderInput(); updateText(); };
+                g.querySelector('.choices').appendChild(b);
+            });
+            a.appendChild(g);
+        });
+    }
+    else if(mode==='B'){
+        a.innerHTML = '<p>그림에 맞는 단어를 모두 골라 보세요.</p><div class="wordlist" id="words"></div>';
+        let allWords = [];
+        keys.forEach(k => { allWords.push(c[k]); allWords.push(alt[k]); });
+        allWords.sort(() => Math.random() - 0.5).forEach(v => {
+            const b = document.createElement('button');
+            b.className = 'word' + (chosen.has(v) ? ' on' : '');
+            b.textContent = `${getIcon(v)} ${v}`;
+            b.onclick = () => { chosen.has(v) ? chosen.delete(v) : chosen.add(v); renderInput(); updateText(); };
+            el('words').appendChild(b);
+        });
+    }
+    else {
+        a.innerHTML = `<p>그림을 보고 문장을 적거나 말해 보세요.</p>
+        <textarea id="free" aria-label="그림 설명" placeholder="예: 놀이터에 하늘색 안경을 쓴 코끼리가 있어요."></textarea>
+        <div class="row">
+            <button class="btn" id="mic">🎤 말로 입력</button>
+            <button class="btn" id="help">문장 시작 도움</button>
+        </div>
+        <p class="note" id="micNote"></p>`;
+        const freeArea = el('free');
+        if(freeArea) {
+            freeArea.value = free;
+            freeArea.oninput = e => { free = e.target.value; updateText(); };
+        }
+        const helpBtn = el('help');
+        if(helpBtn) helpBtn.onclick = () => { free = `${c.animal}가 있어요.`; if(freeArea) freeArea.value = free; updateText(); };
+        const micBtn = el('mic');
+        if(micBtn) micBtn.onclick = recordVoice;
+    }
+    updateText();
+}
+
+function updateMissionSelect() {
+    const sel = el('missionSelect');
+    if(!sel) return;
+    sel.innerHTML = missions.map((m,i) => `<option value="${i}">${i+1}번 미션 · ${m[0]}</option>`).join('');
+    sel.value = level;
+}
+
+function start(n) {
+    level = n;
+    const c = correct(), alt = alternative();
+    picked = {}; 
+    chosen = new Set(); 
+    free = ''; 
+    
+    updateMissionSelect();
+    
+    const counterEl = el('counter');
+    if(counterEl) counterEl.textContent = `⭐ 미션 ${level+1} / ${missions.length}`;
+    
+    const targetEl = el('target');
+    if(targetEl) {
+        if (missions[level][9]) {
+            targetEl.innerHTML = `<img src="${missions[level][9]}" alt="미션 ${level+1} 목표 그림" style="width:100%;height:100%;object-fit:cover;border-radius:18px;">`;
+        } else {
+            targetEl.innerHTML = svg(c);
+        }
+    }
+    
+    const descEl = el('description');
+    if(descEl) descEl.textContent = mission()[8];
+    
+    const resultEl = el('result');
+    if(resultEl) resultEl.innerHTML = '<div class="empty">🎨<br>설명한 뒤 정답 확인하기 버튼을 눌러요!</div>';
+    
+    const feedbackEl = el('feedback');
+    if(feedbackEl) feedbackEl.innerHTML = '';
+    
+    const hintAreaEl = el('hintArea');
+    if(hintAreaEl) hintAreaEl.innerHTML = '';
+    
+    const nextBtn = el('next');
+    if(nextBtn) nextBtn.hidden = true;
+    
+    const checkBtn = el('checkBtn');
+    if(checkBtn) checkBtn.hidden = false;
+    
+    const drawBtn = el('draw');
+    if(drawBtn) drawBtn.hidden = true;
+    
+    document.querySelectorAll('.mode').forEach(b => b.classList.toggle('on', b.dataset.mode === mode));
+    renderInput();
+    window.scrollTo({top:0, behavior:'smooth'});
+    
+    if (typeof activeRecognition !== 'undefined' && activeRecognition) {
+        try { activeRecognition.stop(); } catch(e){}
+        activeRecognition = null;
+        isRecording = false;
+    }
+}
+
+function getUserKeywords() {
+    const c = correct(), alt = alternative();
+    let d = {};
+    if (mode === 'A') return Object.assign({}, picked);
+    if (mode === 'B') {
+        keys.forEach(k => {
+            if (chosen.has(c[k])) d[k] = c[k];
+            else if (chosen.has(alt[k])) d[k] = alt[k];
+        });
+        return d;
+    }
+    const t = free.replace(/\s/g, '');
+    keys.forEach(k => {
+        const match = (val, text) => {
+            if(!val) return false;
+            if(text.includes(val)) return true;
+            if(val==='빨간' && (text.includes('빨강')||text.includes('레드'))) return true;
+            if(val==='파란' && (text.includes('파랑')||text.includes('블루'))) return true;
+            if(val==='노란' && (text.includes('노랑')||text.includes('옐로'))) return true;
+            if(val==='하늘색' && text.includes('하늘')) return true;
+            if(val==='분홍색' && text.includes('분홍')) return true;
+            return false;
+        };
+        if (match(c[k], t)) d[k] = c[k];
+        else if (match(alt[k], t)) d[k] = alt[k];
+    });
+    return d;
+}
+
+function checkAnswer() {
+    if(!getText().trim()) {
+        showToast('먼저 그림을 설명하는 단어나 문장을 완성해주세요!');
+        return;
+    }
+    
+    const userD = getUserKeywords();
+    const c = correct();
+    const hit = keys.filter(k => userD[k] === c[k]);
+    
+    const resultEl = el('result');
+    if(resultEl) {
+        if (hit.length === 4 && missions[level][9]) {
+            resultEl.innerHTML = `<img src="${missions[level][9]}" alt="내가 찾은 결과" style="width:100%;height:100%;object-fit:cover;border-radius:18px;animation: fadein 0.5s;">`;
+        } else {
+            resultEl.innerHTML = svg(userD);
+        }
+    }
+    
+    const feedbackEl = el('feedback');
+    const checkBtn = el('checkBtn');
+    const drawBtn = el('draw');
+    const nextBtn = el('next');
+
+    if (hit.length === 4) {
+        if(feedbackEl) feedbackEl.innerHTML = `
+            <div class="feedback" style="background:#e6ffe6; border:2px solid #169764;">
+                <strong>🎉 완벽해요! 모든 특징을 다 찾았어요!</strong>
+                <p style="margin:5px 0 0;">'진짜 AI 그림 만들기'를 눌러 선물을 받거나, 바로 다음 미션으로 넘어갈 수 있어요!</p>
+            </div>`;
+        if(checkBtn) checkBtn.hidden = true;
+        if(drawBtn) drawBtn.hidden = false;
+        if(nextBtn) {
+            nextBtn.hidden = false;
+            nextBtn.textContent = level === missions.length - 1 ? '🎓 모든 미션 완료!' : '다음 미션 ➜';
+        }
+        speak('완벽해요! 모든 특징을 다 찾았어요.');
+    } else {
+        if(feedbackEl) feedbackEl.innerHTML = `
+            <div class="feedback" style="background:#fff7e6; border:2px solid #f6af42;">
+                <strong>🤔 앗, 조금 달라요!</strong>
+                <p style="margin:5px 0;">내가 만든 그림(위)과 목표 그림을 비교해보세요. 틀린 부분을 고쳐볼까요?</p>
+                <button id="retryBtn" class="btn" style="margin-top:10px; padding:6px 12px; min-height:auto;">↺ 다시 시도하기</button>
+            </div>`;
+        const retryBtn = el('retryBtn');
+        if(retryBtn) {
+            retryBtn.onclick = () => {
+                if(feedbackEl) feedbackEl.innerHTML = '';
+                if(resultEl) resultEl.innerHTML = '<div class="empty">🎨<br>설명을 고치고 정답 확인하기를 다시 눌러요!</div>';
+            };
+        }
+        speak('앗 조금 달라요. 목표 그림과 비교해 보세요.');
+    }
+}
+
+async function generateAIImage(promptText) {
+    const apiKey = ""; 
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent?key=${apiKey}`;
+    
+    const enhancedPrompt = `어린이 동화책에 나오는 귀엽고 따뜻한 느낌의 3D 렌더링 일러스트 스타일로 다음 내용을 그려주세요: ${promptText}. 폭력적이거나 복잡한 요소 금지.`;
+    
+    const payload = {
+        contents: [{ parts: [{ text: enhancedPrompt }] }],
+        generationConfig: {
+            responseModalities: ['IMAGE'],
+            imageConfig: { aspectRatio: "16:9" }
+        }
+    };
+    
+    const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    const result = await response.json();
+    const part = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+    
+    if(!part) throw new Error("이미지 생성 실패");
+    return part.inlineData;
+}
+
+async function draw() {
+    const userPrompt = getText().trim();
+    const btn = el('draw');
+    if(btn) {
+        btn.disabled = true;
+        btn.textContent = '⏳ AI가 그리는 중...';
+    }
+    const resultEl = el('result');
+    if(resultEl) resultEl.innerHTML = '<div class="empty"><div class="spinner"></div>마법의 붓으로 쓱싹쓱싹...<br><small>약 5~10초 정도 걸려요</small></div>';
+    
+    try {
+        const imageData = await generateAIImage(userPrompt);
+        const imgUrl = `data:${imageData.mimeType};base64,${imageData.data}`;
+        
+        if(resultEl) resultEl.innerHTML = `<img src="${imgUrl}" alt="AI가 생성한 그림" style="animation: fadein 0.5s;">`;
+        const feedbackEl = el('feedback');
+        if(feedbackEl) feedbackEl.innerHTML = `
+            <div class="feedback" style="background:#f4efff; border:2px solid var(--purple);">
+                <strong>✨ 진짜 AI 그림 완성!</strong>
+                <p style="margin:5px 0;">내가 쓴 설명대로 멋진 그림이 만들어졌어요!</p>
+            </div>
+        `;
+        speak('진짜 그림이 완성되었어요! 아주 멋져요.');
+        
+    } catch (error) {
+        console.error("Image Gen Error:", error);
+        if(resultEl) resultEl.innerHTML = '<div class="empty">앗! 붓이 잠시 고장났어요.<br><small>다시 한 번 버튼을 눌러주세요.</small></div>';
+        showToast('이미지 생성에 실패했습니다. 다시 시도해주세요.');
+    } finally {
+        if(btn) {
+            btn.disabled = false;
+            btn.textContent = '✨ 진짜 AI 그림 만들기';
+        }
+    }
+}
+
+function hint() {
+    const hintAreaEl = el('hintArea');
+    if(hintAreaEl) hintAreaEl.innerHTML = `<div class="feedback">💡 <b>힌트:</b> 목표 그림에 있는 <b>동물, 물건, 색깔, 장소</b>를 모두 말했는지 확인해 보세요!</div>`;
+}
+
+function speak(s) {
+    if (!('speechSynthesis' in window)) return;
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(s);
+    u.lang = 'ko-KR';
+    u.rate = 0.85;
+    speechSynthesis.speak(u);
+}
+
+let activeRecognition = null;
+let isRecording = false;
+
+function recordVoice() {
+    const R = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const micNote = el('micNote');
+    if (!R) {
+        if(micNote) micNote.textContent = '⚠️ 마이크 입력을 지원하지 않는 브라우저입니다. Chrome을 사용해주세요.';
+        return;
+    }
+
+    if (isRecording) {
+        if (activeRecognition) {
+            try { activeRecognition.stop(); } catch(e) {}
+        }
+        isRecording = false;
+        if(micNote) micNote.textContent = '🛑 음성 인식을 중지했습니다.';
+        return;
+    }
+
+    try {
+        activeRecognition = new R();
+        activeRecognition.lang = 'ko-KR';
+        activeRecognition.continuous = false;
+        activeRecognition.interimResults = false;
+        
+        activeRecognition.onstart = () => {
+            isRecording = true;
+            if(micNote) micNote.textContent = '🎤 듣고 있어요! (다시 누르면 중지됩니다)';
+        };
+
+        activeRecognition.onresult = e => {
+            const resultText = e.results[0][0].transcript;
+            free += (free ? ' ' : '') + resultText;
+            const freeArea = el('free');
+            if(freeArea) freeArea.value = free;
+            updateText();
+            if(micNote) micNote.textContent = `✅ 잘 들었어요! "${resultText}"`;
+        };
+        
+        activeRecognition.onerror = e => {
+            isRecording = false;
+            if(micNote) micNote.textContent = '⚠️ 마이크 오류가 발생했습니다 (' + e.error + ')';
+        };
+        
+        activeRecognition.onend = () => {
+            isRecording = false;
+        };
+        
+        activeRecognition.start();
+    } catch(e) {
+        isRecording = false;
+        if(micNote) micNote.textContent = '⚠️ 마이크를 시작할 수 없습니다.';
+    }
+}
+
+function renderMissionManager() {
+    const list = el('missionManagerList');
+    if(!list) return;
+    list.innerHTML = missions.map((m, i) => `
+        <div style="border:2px solid var(--border); padding:12px; border-radius:12px; margin-bottom:10px; background:#faf5ff;">
+            <div style="font-weight:bold; margin-bottom:8px;">🎯 미션 ${i+1}: ${m[0]} (${m[4]}, ${m[2]}, ${m[6]})</div>
+            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                <input type="file" accept="image/*" id="file_m_${i}" style="flex:1; min-width:200px; font-size:14px; padding:5px; background:white;">
+                ${m[9] ? '<span style="color:#169764; font-weight:bold; font-size:14px; background:#e6ffe6; padding:4px 8px; border-radius:8px;">✅ 커스텀 이미지 등록됨</span>' : '<span style="color:#777; font-size:14px;">기본 일러스트 엔진 사용 중</span>'}
+            </div>
+        </div>
+    `).join('');
+    
+    missions.forEach((m, i) => {
+        const fileInput = el(`file_m_${i}`);
+        if(fileInput) {
+            fileInput.onchange = (e) => {
+                if(e.target.files && e.target.files[0]) {
+                    compressImage(e.target.files[0], (dataUrl) => {
+                        missions[i][9] = dataUrl;
+                        showToast(`${i+1}번 미션 이미지가 적용되었습니다.`);
+                        renderMissionManager();
+                        if(level === i) start(level);
+                    });
+                }
+            };
+        }
+    });
+}
+
+function compressImage(file, callback) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 400;
+            let width = img.width;
+            let height = img.height;
+            if (width > MAX_WIDTH) {
+                height *= MAX_WIDTH / width;
+                width = MAX_WIDTH;
+            }
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+            callback(dataUrl);
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+function saveAndApplyNewMission(newMission) {
+    missions.push(newMission);
+    showToast('새로운 커스텀 미션이 추가되었습니다!');
+    ['t_a_c','t_a_w','t_c_c','t_c_w','t_i_c','t_i_w','t_p_c','t_p_w','t_desc'].forEach(id => {
+        const input = el(id);
+        if(input) input.value = '';
+    });
+    const tImg = el('t_img');
+    if(tImg) tImg.value = '';
+    
+    updateMissionSelect();
+    renderMissionManager();
+    const sel = el('missionSelect');
+    if(sel) sel.value = missions.length - 1;
+    start(missions.length - 1);
+}
+
+// 안전한 이벤트 바인딩 및 앱 초기화 (DOMContentLoaded / window.onload 시점 보장)
+window.onload = () => {
+    // 1. 모드 버튼 바인딩
+    document.querySelectorAll('.mode').forEach(b => {
+        b.onclick = () => {
+            mode = b.dataset.mode;
+            document.querySelectorAll('.mode').forEach(x => x.classList.toggle('on', x === b));
+            renderInput();
+        };
+    });
+
+    // 2. 주요 버튼 바인딩
+    const checkBtn = el('checkBtn');
+    if(checkBtn) checkBtn.onclick = checkAnswer;
+
+    const drawBtn = el('draw');
+    if(drawBtn) drawBtn.onclick = draw;
+
+    const hintBtn = el('hint');
+    if(hintBtn) hintBtn.onclick = hint;
+
+    const guideBtn = el('guide');
+    if(guideBtn) guideBtn.onclick = () => speak('왼쪽의 목표 그림을 잘 살펴보세요. 오른쪽에서 특징을 골라 정답을 확인해보세요.');
+
+    const speakBtn = el('speak');
+    if(speakBtn) speakBtn.onclick = () => {
+        const text = getText();
+        if(text) speak(text);
+        else showToast('먼저 단어를 고르거나 글을 써주세요.');
+    };
+
+    const restartBtn = el('restart');
+    if(restartBtn) restartBtn.onclick = () => start(0);
+
+    const nextBtn = el('next');
+    if(nextBtn) nextBtn.onclick = () => {
+        if (level < missions.length - 1) start(level + 1);
+        else {
+            const feedbackEl = el('feedback');
+            if(feedbackEl) feedbackEl.innerHTML = '<div class="success" style="text-align:center"><strong>🏆 탐정단 수료!</strong><p>모든 미션을 멋지게 해냈어요!</p></div>';
+            nextBtn.hidden = true;
+            speak('축하해요! 모든 미션을 마쳤어요!');
+        }
+    };
+
+    const missionSelect = el('missionSelect');
+    if(missionSelect) missionSelect.onchange = e => start(Number(e.target.value));
+
+    // 3. 선생님 로그인 바인딩
+    const pwBtn = el('pwBtn');
+    if(pwBtn) {
+        pwBtn.onclick = () => {
+            const pwInput = el('teacherPw');
+            if(pwInput && pwInput.value === '1234') {
+                const loginDiv = el('teacherLogin');
+                const contentDiv = el('teacherContent');
+                if(loginDiv) loginDiv.style.display = 'none';
+                if(contentDiv) contentDiv.style.display = 'block';
+                renderMissionManager();
+                showToast('선생님 모드로 로그인되었습니다.');
+            } else {
+                showToast('비밀번호가 틀렸습니다.');
+            }
+        };
+    }
+
+    // 4. 새 미션 추가 바인딩
+    const addMissionBtn = el('addMissionBtn');
+    if(addMissionBtn) {
+        addMissionBtn.onclick = () => {
+            const v = (id) => {
+                const elem = el(id);
+                return elem ? elem.value.trim() : '';
+            };
+            const newMission = [
+                v('t_a_c'), v('t_a_w'),
+                v('t_c_c'), v('t_c_w'),
+                v('t_i_c'), v('t_i_w'),
+                v('t_p_c'), v('t_p_w'),
+                v('t_desc') || '그림의 특징을 모두 찾아보세요.',
+                null
+            ];
+            
+            if(newMission.slice(0, 8).some(val => val === '')) {
+                showToast('정답과 오답 항목을 모두 입력해주세요!');
+                return;
+            }
+            
+            const fileInput = el('t_img');
+            if(fileInput && fileInput.files && fileInput.files[0]) {
+                compressImage(fileInput.files[0], (dataUrl) => {
+                    newMission[9] = dataUrl;
+                    saveAndApplyNewMission(newMission);
+                });
+            } else {
+                saveAndApplyNewMission(newMission);
+            }
+        };
+    }
+
+    // 앱 첫 시작
+    start(0);
+};
+
+</script>
+</body>
+</html>
