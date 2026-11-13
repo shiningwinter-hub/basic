@@ -34,7 +34,7 @@ async function generateAIImage(promptText) {
         showToast('선생님 설정에서 Gemini API Key를 먼저 등록해주세요!');
         throw new Error("API Key is missing");
     }
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent?key=${apiKey}`;
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-image:generateContent?key=${apiKey}`;
     
     const enhancedPrompt = `어린이 동화책에 나오는 귀엽고 따뜻한 느낌의 3D 렌더링 일러스트 스타일로 다음 내용을 그려주세요: ${promptText}. 폭력적이거나 복잡한 요소 금지.`;
     
