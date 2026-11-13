@@ -34,9 +34,9 @@
         /* Mission & Tabs */
         .mission-header { margin-bottom: 15px; font-weight: bold; color: #f39c12; }
         
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;}
         .tab-btn { 
-            flex: 1; padding: 15px; background: white; border: 2px solid var(--border); 
+            flex: 1; min-width: 150px; padding: 15px; background: white; border: 2px solid var(--border); 
             border-radius: 10px; cursor: pointer; display: flex; flex-direction: column; 
             align-items: center; transition: all 0.2s;
         }
@@ -50,29 +50,38 @@
         .panel-title { font-weight: bold; margin-bottom: 15px; font-size: 1.1em; display: flex; align-items: center; gap: 5px; }
         
         /* Left Panel - Image & Result */
-        .target-img-box { background: #f8f9fa; border-radius: 10px; height: 250px; display: flex; justify-content: center; align-items: center; overflow: hidden; margin-bottom: 20px; }
+        .target-img-box { background: #f8f9fa; border-radius: 10px; height: 300px; display: flex; justify-content: center; align-items: center; overflow: hidden; margin-bottom: 20px; }
         .target-img-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
         
         .result-box { background: #f8f9fa; border: 1px dashed var(--border); border-radius: 10px; min-height: 200px; padding: 15px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         .result-img { max-width: 100%; max-height: 250px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-top: 10px; }
         
-        /* Right Panel - Form Area */
-        .question-group { margin-bottom: 20px; }
-        .question-title { font-size: 0.95em; margin-bottom: 10px; color: #444; }
-        .options-grid { display: flex; gap: 10px; }
+        /* Right Panel - A Type (Categorized) */
+        .a-type-area .question-group { margin-bottom: 20px; }
+        .a-type-area .question-title { font-size: 0.95em; margin-bottom: 10px; color: #444; }
+        .a-type-area .options-grid { display: flex; gap: 10px; }
+        
+        /* Right Panel - B Type (Word Cloud) */
+        .b-type-area .word-cloud { display: flex; flex-wrap: wrap; gap: 10px; border: 1px solid var(--border); padding: 15px; border-radius: 10px; }
+        
+        /* Common Option Buttons */
         .option-btn { 
-            flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 10px; 
+            padding: 10px 15px; border: 1px solid var(--border); border-radius: 20px; 
             background: white; cursor: pointer; text-align: center; font-size: 0.95em; transition: 0.2s;
         }
+        .a-type-area .option-btn { flex: 1; border-radius: 10px; padding: 12px; }
+        
         .option-btn:hover { background: #f9f9f9; }
         .option-btn.selected { border-color: var(--danger); background: #fff5f5; color: var(--danger); font-weight: bold; }
         
-        /* C형 Text Input */
-        .c-type-input { width: 100%; height: 100px; padding: 15px; border: 1px solid var(--border); border-radius: 10px; resize: none; font-size: 1em; box-sizing: border-box; }
+        /* Right Panel - C Type (Text Input) */
+        .c-type-area .c-type-input { width: 100%; height: 120px; padding: 15px; border: 1px solid var(--border); border-radius: 10px; resize: none; font-size: 1em; box-sizing: border-box; margin-bottom: 10px;}
+        .c-type-area .c-tools { display: flex; gap: 10px; }
+        .c-type-area .c-tool-btn { flex: 1; padding: 10px; background: white; border: 1px solid var(--border); border-radius: 8px; cursor: pointer;}
         
         /* Summary Box */
         .summary-box { background: var(--primary-light); padding: 15px; border-radius: 10px; margin-top: 20px; }
-        .summary-text { font-weight: bold; color: var(--primary); min-height: 24px; }
+        .summary-text { font-weight: bold; color: var(--primary); min-height: 24px; background: white; padding: 10px; border-radius: 5px;}
         
         .btn-group { display: flex; gap: 10px; margin-top: 15px; }
         .btn { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; font-size: 1em; }
@@ -83,37 +92,31 @@
         
         /* Teacher Mode */
         .teacher-area { margin-top: 50px; border-top: 2px dashed var(--border); padding-top: 30px; }
+        .mission-admin-card { background: white; padding: 15px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 15px; }
+        .mission-admin-card input[type="text"] { width: 100px; padding: 5px; margin: 2px; }
         #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: #fff; padding: 10px 20px; border-radius: 20px; display: none; z-index: 1000; }
         
-        /* Hidden elements */
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Header -->
         <div class="header">
             <h1>🕵️‍♂️ AI 그림 탐정단</h1>
             <p>보고 👀 · 말하고 🗣️ · 정답을 맞혀 AI 그림을 선물 받아요! 🎨</p>
             <div class="header-btns">
-                <button>🔊 안내 듣기</button>
+                <button onclick="speakSummary('선생님이 등록한 그림을 보고, 맞는 단어를 찾아 그림을 완성해보세요.')">🔊 안내 듣기</button>
                 <button onclick="location.reload()">↺ 처음부터</button>
             </div>
         </div>
         
-        <!-- Mission Select -->
         <div class="mission-header">
             ⭐ 미션 
-            <select id="missionSelect" style="border:none; font-weight:bold; color:#f39c12; font-size:1em; outline:none; background:transparent;">
-                <option value="1">1 / 5</option>
-                <option value="2">2 / 5</option>
-                <option value="3">3 / 5</option>
-                <option value="4">4 / 5</option>
-                <option value="5">5 / 5</option>
+            <select id="missionSelect" style="border:none; font-weight:bold; color:#f39c12; font-size:1em; outline:none; background:transparent; cursor: pointer;">
+                <option value="">불러오는 중...</option>
             </select>
         </div>
 
-        <!-- Tabs -->
         <div class="tabs">
             <div class="tab-btn active" data-tab="A" onclick="switchTab('A')">
                 <strong>🌸 A형 · 그림 선택</strong>
@@ -129,19 +132,18 @@
             </div>
         </div>
 
-        <!-- Main Content -->
         <div class="main-grid">
             <!-- Left Panel -->
             <div class="panel">
                 <div class="panel-title">👀 ① 목표 그림을 살펴봐요</div>
                 <div class="target-img-box" id="targetImageContainer">
-                    <p style="color:#999;">클라우드에서 그림을 불러오는 중...</p>
+                    <p style="color:#999;">그림을 불러오는 중...</p>
                 </div>
+                <p style="font-size: 0.8em; color: #888; text-align: center;" id="hintText">그림을 잘 살펴보고 단어를 찾아보세요.</p>
                 
                 <div class="panel-title" style="margin-top:20px; color: var(--danger);">🌸 ③ 내가 찾은 결과 확인</div>
                 <div class="result-box" id="resultBox">
                     <p style="color: #666; font-size: 0.9em;">설명한 뒤 정답 확인하기 버튼을 눌러요!</p>
-                    <!-- 결과가 여기에 동적으로 들어갑니다 -->
                 </div>
             </div>
 
@@ -149,42 +151,40 @@
             <div class="panel" id="rightPanel">
                 <div class="panel-title" style="color: var(--danger);">🖍️ ② 그림을 설명해요</div>
                 
-                <!-- A형 / B형 공통 요소 선택 영역 -->
-                <div id="selectionArea">
+                <!-- A형 영역 (카테고리별) -->
+                <div id="area_A" class="a-type-area">
                     <div class="question-group">
                         <div class="question-title">① 어떤 동물인가요?</div>
-                        <div class="options-grid" id="q_animal">
-                            <button class="option-btn" onclick="selectOption('animal', '강아지')">🐶 강아지</button>
-                            <button class="option-btn" onclick="selectOption('animal', '고양이')">🐱 고양이</button>
-                        </div>
+                        <div class="options-grid" id="q_animal"></div>
                     </div>
                     <div class="question-group">
                         <div class="question-title">② 무엇을 가지고 있나요?</div>
-                        <div class="options-grid" id="q_item">
-                            <button class="option-btn" onclick="selectOption('item', '모자')">🎩 모자</button>
-                            <button class="option-btn" onclick="selectOption('item', '목도리')">🧣 목도리</button>
-                        </div>
+                        <div class="options-grid" id="q_item"></div>
                     </div>
                     <div class="question-group">
                         <div class="question-title">③ 어떤 색깔인가요?</div>
-                        <div class="options-grid" id="q_color">
-                            <button class="option-btn" onclick="selectOption('color', '빨간')">❤️ 빨간</button>
-                            <button class="option-btn" onclick="selectOption('color', '파란')">💙 파란</button>
-                        </div>
+                        <div class="options-grid" id="q_color"></div>
                     </div>
                     <div class="question-group">
                         <div class="question-title">④ 어디에 있나요?</div>
-                        <div class="options-grid" id="q_place">
-                            <button class="option-btn" onclick="selectOption('place', '잔디밭')">🌱 잔디밭</button>
-                            <button class="option-btn" onclick="selectOption('place', '바닷가')">🏖️ 바닷가</button>
-                        </div>
+                        <div class="options-grid" id="q_place"></div>
                     </div>
                 </div>
 
-                <!-- C형 텍스트 입력 영역 (기본 숨김) -->
-                <div id="typingArea" class="hidden">
-                    <p class="question-title">보이는 그림을 자세히 설명해주세요.</p>
-                    <textarea id="cTypeInput" class="c-type-input" placeholder="예: 빨간 모자를 쓴 강아지가 잔디밭에 있어요."></textarea>
+                <!-- B형 영역 (혼합 단어 뭉치) -->
+                <div id="area_B" class="b-type-area hidden">
+                    <p style="font-size: 0.9em; margin-bottom: 10px;">그림에 맞는 단어를 모두 골라 보세요.</p>
+                    <div class="word-cloud" id="b_word_cloud"></div>
+                </div>
+
+                <!-- C형 영역 (직접 입력) -->
+                <div id="area_C" class="c-type-area hidden">
+                    <p style="font-size: 0.9em; margin-bottom: 10px;">그림을 보고 문장을 적거나 말해 보세요.</p>
+                    <textarea id="cTypeInput" class="c-type-input" placeholder="예: 놀이터에 하늘색 안경을 쓴 코끼리가 있어요." oninput="updateSummaryC()"></textarea>
+                    <div class="c-tools">
+                        <button class="c-tool-btn" onclick="startDictation()">🎤 말로 입력</button>
+                        <button class="c-tool-btn" onclick="insertHelperText()">문장 시작 도움</button>
+                    </div>
                 </div>
 
                 <!-- Summary & Actions -->
@@ -193,14 +193,17 @@
                     <div class="summary-text" id="summaryText">단어를 선택하거나 문장을 적어 보세요.</div>
                     
                     <div class="btn-group">
-                        <button class="btn btn-outline" id="listenBtn">🔊 설명 듣기</button>
+                        <button class="btn btn-outline" id="listenBtn" onclick="speakSummary()">🔊 설명 듣기</button>
                         <button class="btn btn-primary" id="checkAnswerBtn" onclick="checkAnswer()">🔍 정답 확인하기</button>
                     </div>
                 </div>
                 
-                <div style="margin-top: 15px; padding: 15px; background:#fff9e6; border-radius:10px; font-size:0.85em;">
-                    <strong>💡 천천히 해도 괜찮아요!</strong><br>
-                    설명이 맞는지 확인하고, 완벽하면 멋진 AI 그림을 선물 받을 수 있어요!
+                <div style="margin-top: 15px; padding: 15px; background:#fff9e6; border-radius:10px; font-size:0.85em; display:flex; justify-content: space-between;">
+                    <div>
+                        <strong>💡 천천히 해도 괜찮아요!</strong><br>
+                        설명이 맞는지 확인하고, 완벽하면 멋진 AI 그림을 받을 수 있어요!
+                    </div>
+                    <button style="border:none; background:transparent; color:#f39c12; cursor:pointer; font-weight:bold;" onclick="showHint()">💡 힌트</button>
                 </div>
             </div>
         </div>
@@ -219,8 +222,12 @@
                     <input type="password" id="apiKeyInput" placeholder="Gemini API Key" style="width: 300px; padding: 5px;">
                     <button onclick="saveApiKey()">저장</button>
                     
-                    <h4 style="margin-top:20px;">📸 미션 그림 Firebase 업로드</h4>
-                    <div id="teacherMissionManager"></div>
+                    <div style="display:flex; justify-content: space-between; align-items: center; margin-top:30px;">
+                        <h4 style="margin:0;">📝 미션 그림 및 정답 관리 (Firebase 연동)</h4>
+                        <button class="btn btn-success" style="padding: 5px 15px;" onclick="addNewMission()">➕ 새 미션 추가</button>
+                    </div>
+                    
+                    <div id="teacherMissionManager" style="margin-top: 15px;"></div>
                 </div>
             </div>
         </div>
@@ -230,8 +237,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+        import { getFirestore, doc, setDoc, collection, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBT2ueb7MgaSOFDCpiqilGDBSu7-sg5qh4",
@@ -248,21 +255,22 @@
 
         // --- 앱 상태 관리 ---
         let currentTab = 'A';
-        let currentMission = 1;
-        let unsubscribeStudent = null;
+        let currentMission = null;
+        let isFirstLoad = true;
         
-        // 정답 데이터 (선생님이 DB에서 관리할 수도 있지만, 현재는 데모용 하드코딩)
-        const missionAnswers = {
-            1: { animal: '강아지', item: '모자', color: '빨간', place: '잔디밭' },
-            2: { animal: '고양이', item: '목도리', color: '파란', place: '바닷가' },
-            3: { animal: '강아지', item: '목도리', color: '빨간', place: '바닷가' },
-            4: { animal: '고양이', item: '모자', color: '파란', place: '잔디밭' },
-            5: { animal: '강아지', item: '모자', color: '파란', place: '바닷가' }
-        };
-        
+        let missionData = {}; 
         let userSelections = { animal: '', item: '', color: '', place: '' };
+        let bTypeSelections = []; 
 
-        // 유틸 함수
+        // ★ 1. 기본 제공 로컬 미션 데이터 (사용자 요청 반영)
+        const defaultMissions = {
+            '1': { id: '1', animal: '강아지', item: '털모자', color: '빨간', place: '잔디밭', imageUrl: './images/mission1.png' },
+            '2': { id: '2', animal: '고양이', item: '목도리', color: '파란', place: '눈밭', imageUrl: './images/mission2.png' },
+            '3': { id: '3', animal: '토끼', item: '풍선', color: '노란', place: '꽃밭', imageUrl: './images/mission3.png' },
+            '4': { id: '4', animal: '공룡', item: '모자', color: '보라', place: '숲', imageUrl: './images/mission4.png' },
+            '5': { id: '5', animal: '코끼리', item: '안경', color: '하늘색', place: '놀이터', imageUrl: './images/mission5.png' }
+        };
+
         window.el = id => document.getElementById(id);
         window.showToast = msg => {
             const toast = el('toast');
@@ -271,75 +279,266 @@
             setTimeout(() => toast.style.display = 'none', 3000);
         };
 
-        // --- 탭 전환 로직 ---
+        // --- 데이터 로드 (Firestore) ---
+        function loadMissionList() {
+            onSnapshot(collection(db, "missions"), (snapshot) => {
+                const select = el('missionSelect');
+                let currentValue = select.value;
+                
+                // 로컬 기본 미션 1~5 셋업
+                missionData = JSON.parse(JSON.stringify(defaultMissions));
+                
+                // Firebase 데이터를 기본 미션 위에 덮어쓰거나 (새 미션 6~) 추가
+                snapshot.forEach(document => {
+                    const data = document.data();
+                    const docId = data.id || document.id.replace('mission_', '');
+                    data.id = docId;
+                    
+                    if (missionData[docId]) {
+                        // 기본 미션(1~5)인 경우, 파이어베이스에 이미지가 없으면 기본 경로(images/...) 유지
+                        const preserveImage = (!data.imageUrl && parseInt(docId) <= 5) ? missionData[docId].imageUrl : data.imageUrl;
+                        missionData[docId] = { ...missionData[docId], ...data, imageUrl: preserveImage };
+                    } else {
+                        missionData[docId] = data; // 선생님이 새로 추가한 미션 6~
+                    }
+                });
+
+                // 셀렉트 박스 갱신 (ID 번호 순서대로)
+                select.innerHTML = '';
+                const sortedKeys = Object.keys(missionData).sort((a,b) => Number(a) - Number(b));
+                
+                if (sortedKeys.length === 0) {
+                    el('targetImageContainer').innerHTML = "<p>등록된 미션이 없습니다.</p>";
+                    return;
+                }
+
+                sortedKeys.forEach((key, index) => {
+                    const option = window.document.createElement('option');
+                    option.value = key;
+                    option.text = `${index + 1} / ${sortedKeys.length}`;
+                    select.appendChild(option);
+                });
+
+                // 선택값 복구
+                if (!missionData[currentValue]) {
+                    currentValue = sortedKeys[0];
+                    select.value = currentValue;
+                } else {
+                    select.value = currentValue;
+                }
+
+                // 화면 렌더링 분기
+                if (isFirstLoad) {
+                    loadMissionContent(currentValue);
+                    isFirstLoad = false;
+                } else {
+                    const targetImg = el('targetImageContainer').querySelector('img');
+                    const newUrl = missionData[currentValue].imageUrl;
+                    if(newUrl) {
+                        if(!targetImg || targetImg.getAttribute('src') !== newUrl) {
+                            el('targetImageContainer').innerHTML = `<img src="${newUrl}" alt="목표 그림">`;
+                        }
+                    } else {
+                        el('targetImageContainer').innerHTML = "<p style='color:#999'>선생님이 그림을 등록하지 않았습니다.</p>";
+                    }
+                }
+                
+                if(!el('teacherContent').classList.contains('hidden')) {
+                    renderTeacherMissions();
+                }
+            });
+        }
+
+        // --- 미션 화면 구성 (초기화) ---
+        window.loadMissionContent = (missionId) => {
+            currentMission = missionId;
+            const data = missionData[missionId];
+            if(!data) return;
+
+            el('targetImageContainer').innerHTML = data.imageUrl 
+                ? `<img src="${data.imageUrl}" alt="목표 그림">` 
+                : `<p style="color:#999">그림이 등록되지 않았습니다.</p>`;
+            
+            generateOptions(data);
+            
+            userSelections = { animal: '', item: '', color: '', place: '' };
+            bTypeSelections = [];
+            el('cTypeInput').value = "";
+            updateSummaryA();
+            resetResultBox();
+        }
+
+        function generateOptions(data) {
+            // 늘어난 단어에 맞춘 더미 오답 풀
+            const dummies = {
+                animal: ['고양이', '토끼', '곰돌이', '강아지', '공룡', '코끼리'],
+                item: ['목도리', '안경', '가방', '털모자', '풍선', '모자'],
+                color: ['파란', '노란', '초록', '빨간', '보라', '하늘색'],
+                place: ['바닷가', '우주', '교실', '잔디밭', '눈밭', '꽃밭', '숲', '놀이터']
+            };
+            const allWords = [];
+
+            ['animal', 'item', 'color', 'place'].forEach(cat => {
+                const ans = data[cat] || dummies[cat][0]; // 기본값
+                const fake = dummies[cat].find(d => d !== ans) || dummies[cat][1];
+                const options = [ans, fake].sort(() => Math.random() - 0.5);
+                
+                const containerA = el(`q_${cat}`);
+                if(containerA) {
+                    containerA.innerHTML = '';
+                    options.forEach(opt => {
+                        const icon = getIcon(opt);
+                        containerA.innerHTML += `<button class="option-btn" onclick="selectOptionA('${cat}', '${opt}', this)">${icon} ${opt}</button>`;
+                    });
+                }
+                allWords.push(...options);
+            });
+
+            const bContainer = el('b_word_cloud');
+            bContainer.innerHTML = '';
+            allWords.sort(() => Math.random() - 0.5).forEach(word => {
+                const icon = getIcon(word);
+                bContainer.innerHTML += `<button class="option-btn" onclick="toggleOptionB('${word}', this)">${icon} ${word}</button>`;
+            });
+        }
+
+        function getIcon(word) {
+            const icons = { 
+                '강아지':'🐶', '고양이':'🐱', '토끼':'🐰', '곰돌이':'🐻', '공룡':'🦖', '코끼리':'🐘',
+                '모자':'🎩', '털모자':'🧢', '목도리':'🧣', '안경':'👓', '가방':'🎒', '풍선':'🎈',
+                '빨간':'❤️', '파란':'💙', '노란':'💛', '초록':'💚', '보라':'💜', '하늘색':'🩵',
+                '잔디밭':'🌱', '바닷가':'🏖️', '우주':'🚀', '교실':'🏫', '눈밭':'❄️', '꽃밭':'🌷', '숲':'🌲', '놀이터':'🛝' 
+            };
+            return icons[word] || '📌';
+        }
+
+        el('missionSelect').onchange = (e) => loadMissionContent(e.target.value);
+
+        // --- 탭 및 입력 로직 ---
         window.switchTab = (tab) => {
             currentTab = tab;
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelector(`.tab-btn[data-tab="${tab}"]`).classList.add('active');
             
-            if(tab === 'A' || tab === 'B') {
-                el('selectionArea').classList.remove('hidden');
-                el('typingArea').classList.add('hidden');
-                updateSummary();
-            } else if (tab === 'C') {
-                el('selectionArea').classList.add('hidden');
-                el('typingArea').classList.remove('hidden');
-                el('summaryText').textContent = "아래에 입력한 내용이 정답으로 확인됩니다.";
-            }
+            el('area_A').classList.add('hidden');
+            el('area_B').classList.add('hidden');
+            el('area_C').classList.add('hidden');
+            el(`area_${tab}`).classList.remove('hidden');
             
-            // 결과창 초기화
+            if(tab === 'A') updateSummaryA();
+            if(tab === 'B') updateSummaryB();
+            if(tab === 'C') updateSummaryC();
             resetResultBox();
         };
 
-        // --- 선택 로직 (A형, B형) ---
-        window.selectOption = (category, value) => {
+        window.selectOptionA = (category, value, btnObj) => {
             userSelections[category] = value;
-            
-            // UI 업데이트
-            const buttons = el(`q_${category}`).querySelectorAll('.option-btn');
-            buttons.forEach(btn => btn.classList.remove('selected'));
-            
-            const selectedBtn = Array.from(buttons).find(b => b.innerText.includes(value));
-            if(selectedBtn) selectedBtn.classList.add('selected');
-            
-            updateSummary();
+            const siblings = btnObj.parentNode.querySelectorAll('.option-btn');
+            siblings.forEach(btn => btn.classList.remove('selected'));
+            btnObj.classList.add('selected');
+            updateSummaryA();
         };
 
-        function updateSummary() {
+        function updateSummaryA() {
+            if(currentTab !== 'A') return;
             const { color, item, animal, place } = userSelections;
             const parts = [];
+            
+            // 종성(받침) 여부 확인하여 을/를, 이/가 매핑
+            const checkJongseong = (word) => (word.charCodeAt(word.length - 1) - 0xac00) % 28 > 0;
+
             if(color) parts.push(color);
-            if(item) parts.push(item + "(을)를 가진");
-            if(animal) parts.push(animal + "(이)가");
+            if(item) parts.push(item + (checkJongseong(item) ? "을" : "를") + " 가진");
+            if(animal) parts.push(animal + (checkJongseong(animal) ? "이" : "가"));
             if(place) parts.push(place + "에 있어요.");
             
             el('summaryText').textContent = parts.length > 0 ? parts.join(" ") : "단어를 선택하거나 문장을 적어 보세요.";
         }
 
-        // --- 정답 확인 및 2단계 분기 로직 ---
+        window.toggleOptionB = (value, btnObj) => {
+            if (bTypeSelections.includes(value)) {
+                bTypeSelections = bTypeSelections.filter(v => v !== value);
+                btnObj.classList.remove('selected');
+            } else {
+                bTypeSelections.push(value);
+                btnObj.classList.add('selected');
+            }
+            updateSummaryB();
+        };
+
+        function updateSummaryB() {
+            if(currentTab !== 'B') return;
+            el('summaryText').textContent = bTypeSelections.length > 0 ? bTypeSelections.join(" ") : "단어를 선택하거나 문장을 적어 보세요.";
+        }
+
+        window.updateSummaryC = () => {
+            if(currentTab !== 'C') return;
+            const text = el('cTypeInput').value;
+            el('summaryText').textContent = text.length > 0 ? text : "단어를 선택하거나 문장을 적어 보세요.";
+        };
+
+        window.insertHelperText = () => {
+            el('cTypeInput').value = "그림에 ";
+            updateSummaryC();
+            el('cTypeInput').focus();
+        };
+
+        window.startDictation = () => {
+            if (!('webkitSpeechRecognition' in window)) {
+                showToast("음성 인식을 지원하지 않는 브라우저입니다.");
+                return;
+            }
+            const recognition = new webkitSpeechRecognition();
+            recognition.lang = 'ko-KR';
+            recognition.onresult = (event) => {
+                const text = event.results[0][0].transcript;
+                el('cTypeInput').value += text;
+                updateSummaryC();
+            };
+            recognition.start();
+            showToast("🎤 마이크에 대고 말씀해주세요...");
+        };
+
+        window.speakSummary = (customText) => {
+            const text = customText || el('summaryText').textContent;
+            if(text && text !== "단어를 선택하거나 문장을 적어 보세요.") {
+                const utterance = new SpeechSynthesisUtterance(text);
+                speechSynthesis.speak(utterance);
+            }
+        };
+
+        window.showHint = () => {
+            const data = missionData[currentMission];
+            if(data) {
+                const hints = [data.animal, data.item, data.color, data.place].filter(Boolean);
+                showToast(`힌트: ${hints.join(', ')} 단어를 찾아보세요!`);
+            }
+        };
+
+        // --- 정답 검증 ---
         window.checkAnswer = () => {
             let isCorrect = false;
-            let promptText = "";
-            const answer = missionAnswers[currentMission];
-            const resultBox = el('resultBox');
+            let promptText = el('summaryText').textContent;
+            const answer = missionData[currentMission];
+            if(!answer) return;
             
-            if (currentTab === 'A' || currentTab === 'B') {
+            if (currentTab === 'A') {
                 isCorrect = (
                     userSelections.animal === answer.animal &&
                     userSelections.item === answer.item &&
                     userSelections.color === answer.color &&
                     userSelections.place === answer.place
                 );
-                promptText = el('summaryText').textContent;
-            } else {
-                // C형: 입력 텍스트 내에 핵심 키워드가 모두 포함되어 있는지 검사
+            } else if (currentTab === 'B') {
+                const needed = [answer.animal, answer.item, answer.color, answer.place].filter(Boolean);
+                isCorrect = needed.every(word => bTypeSelections.includes(word));
+            } else if (currentTab === 'C') {
                 const text = el('cTypeInput').value;
-                isCorrect = text.includes(answer.animal) && text.includes(answer.item) && 
-                            text.includes(answer.color) && text.includes(answer.place);
-                promptText = text;
+                const needed = [answer.animal, answer.item, answer.color, answer.place].filter(Boolean);
+                isCorrect = needed.every(word => text.includes(word));
             }
 
-            // 정답/오답 결과에 따른 UI 생성 (버튼 교체 포함)
+            const resultBox = el('resultBox');
             if (isCorrect) {
                 resultBox.innerHTML = `
                     <div style="font-size: 3em; margin-bottom: 10px;">🎉</div>
@@ -361,7 +560,7 @@
             el('resultBox').innerHTML = `<p style="color: #666; font-size: 0.9em;">설명한 뒤 정답 확인하기 버튼을 눌러요!</p>`;
         };
 
-        // --- 진짜 AI 그림 생성 로직 ---
+        // --- AI API ---
         window.runAI = async (promptText) => {
             const resultBox = el('resultBox');
             resultBox.innerHTML = `
@@ -404,43 +603,13 @@
                 resultBox.innerHTML = `<p style="color:red;">그림을 그리다 오류가 났어요!</p><button class="btn btn-danger" onclick="resetResultBox()">돌아가기</button>`;
             }
         };
-
-        // --- Firebase 실시간 동기화 (학생 화면) ---
-        function loadMissionImage(missionId) {
-            currentMission = parseInt(missionId);
-            const container = el('targetImageContainer');
-            container.innerHTML = "<p>클라우드에서 그림을 불러오는 중...</p>";
-            
-            // 기존 선택 내역 초기화
-            userSelections = { animal: '', item: '', color: '', place: '' };
-            document.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('selected'));
-            el('cTypeInput').value = "";
-            updateSummary();
-            resetResultBox();
-
-            if (unsubscribeStudent) unsubscribeStudent();
-
-            unsubscribeStudent = onSnapshot(doc(db, "missions", `mission_${missionId}`), (docSnap) => {
-                if (docSnap.exists()) {
-                    container.innerHTML = `<img src="${docSnap.data().imageUrl}">`;
-                } else {
-                    container.innerHTML = `<p style="color:var(--danger);">선생님이 아직 이 미션의 목표 그림을 올리지 않았어요.</p>`;
-                }
-            });
-        }
-
-        el('missionSelect').onchange = (e) => loadMissionImage(e.target.value);
         
-        // --- 선생님 관리자 로직 ---
-        window.toggleTeacherMode = () => {
-            el('teacherLogin').classList.toggle('hidden');
-        };
-
+        // --- 선생님 관리자 모드 ---
+        window.toggleTeacherMode = () => { el('teacherLogin').classList.toggle('hidden'); };
         window.loginTeacher = () => {
             if(el('teacherPw').value === '1234') {
                 el('teacherLogin').classList.add('hidden');
                 el('teacherContent').classList.remove('hidden');
-                
                 const savedKey = localStorage.getItem('Gemini API Key');
                 if(savedKey) el('apiKeyInput').value = savedKey;
                 renderTeacherMissions();
@@ -448,55 +617,114 @@
                 showToast("비밀번호가 틀렸습니다.");
             }
         };
-
         window.saveApiKey = () => {
             const key = el('apiKeyInput').value.trim();
-            if(key) {
-                localStorage.setItem('Gemini API Key', key);
-                showToast("API 키 저장 완료!");
+            if(key) { localStorage.setItem('Gemini API Key', key); showToast("API 키 저장 완료!"); }
+        };
+        
+        window.addNewMission = async () => {
+            const newId = Date.now().toString(); 
+            await setDoc(doc(db, "missions", `mission_${newId}`), {
+                id: newId, animal: '강아지', item: '모자', color: '빨간', place: '잔디밭', imageUrl: ''
+            });
+            showToast("새 미션이 추가되었습니다.");
+        };
+        
+        window.deleteMission = async (id) => {
+            if(!confirm("정말 이 미션을 삭제할까요?")) return;
+            await deleteDoc(doc(db, "missions", `mission_${id}`));
+            const storageRef = ref(storage, `missions/mission_${id}`);
+            await deleteObject(storageRef).catch(e => console.log("이미지 파일 없음"));
+            showToast("미션이 삭제되었습니다.");
+        };
+        
+        window.saveMissionData = async (id) => {
+            const data = {
+                animal: el(`t_animal_${id}`).value, item: el(`t_item_${id}`).value,
+                color: el(`t_color_${id}`).value, place: el(`t_place_${id}`).value
+            };
+            await setDoc(doc(db, "missions", `mission_${id}`), data, { merge: true });
+            showToast("정답이 저장되었습니다.");
+        };
+        
+        window.uploadMissionImage = async (id) => {
+            const fileInput = el(`t_file_${id}`);
+            if (!fileInput.files.length) return showToast("파일을 선택하세요!");
+            showToast("이미지 업로드 중...");
+            
+            try {
+                const file = fileInput.files[0];
+                const storageRef = ref(storage, `missions/mission_${id}`);
+                await uploadBytes(storageRef, file);
+                const url = await getDownloadURL(storageRef);
+                await setDoc(doc(db, "missions", `mission_${id}`), { imageUrl: url }, { merge: true });
+                showToast("업로드 성공!");
+                fileInput.value = ""; // 입력창 초기화
+            } catch(e) {
+                console.error(e);
+                showToast("업로드 실패: Firebase Storage 보안 규칙을 확인하세요.");
             }
         };
 
         function renderTeacherMissions() {
             const container = el('teacherMissionManager');
-            container.innerHTML = '';
-            for (let i = 1; i <= 5; i++) {
-                const div = document.createElement('div');
-                div.style = "margin-top: 15px; padding: 15px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 5px;";
-                div.innerHTML = `
-                    <strong>미션 ${i}</strong>
-                    <div id="t_preview_${i}" style="margin: 10px 0; color:#888;">상태 확인 중...</div>
-                    <input type="file" id="t_file_${i}" accept="image/*">
-                    <button id="t_btn_${i}">Firebase에 업로드</button>
-                `;
-                container.appendChild(div);
-
-                onSnapshot(doc(db, "missions", `mission_${i}`), (docSnap) => {
-                    const prev = el(`t_preview_${i}`);
-                    if (docSnap.exists()) {
-                        prev.innerHTML = `<img src="${docSnap.data().imageUrl}" style="max-height:80px; border-radius:5px;"> <span style="color:green">✅ 업로드됨</span>`;
-                    } else {
-                        prev.innerHTML = "❌ 등록된 이미지 없음";
-                    }
-                });
-
-                el(`t_btn_${i}`).onclick = async () => {
-                    const fileInput = el(`t_file_${i}`);
-                    if (!fileInput.files.length) return showToast("파일을 선택하세요!");
-                    showToast(`미션 ${i} 업로드 중...`);
+            
+            // 기존 DOM을 파괴하지 않고 업데이트하여 타이핑 중 포커스 잃는 문제 방지
+            Object.values(missionData).forEach((data, index) => {
+                const id = data.id;
+                let card = el(`t_card_${id}`);
+                
+                if (!card) {
+                    card = document.createElement('div');
+                    card.id = `t_card_${id}`;
+                    card.className = "mission-admin-card";
+                    container.appendChild(card);
                     
-                    const file = fileInput.files[0];
-                    const storageRef = ref(storage, `missions/mission_${i}`);
-                    await uploadBytes(storageRef, file);
-                    const url = await getDownloadURL(storageRef);
-                    await setDoc(doc(db, "missions", `mission_${i}`), { imageUrl: url });
-                    showToast(`미션 ${i} 업로드 성공!`);
-                };
-            }
+                    card.innerHTML = `
+                        <div style="display:flex; justify-content: space-between; align-items:center;">
+                            <strong>미션 <span class="m-idx">${index + 1}</span></strong>
+                            <button class="btn btn-danger" style="padding: 3px 8px; font-size: 0.8em;" onclick="deleteMission('${id}')">삭제</button>
+                        </div>
+                        <div style="margin: 10px 0; display:flex; gap:15px; align-items:center;">
+                            <div id="t_img_wrap_${id}">
+                                ${data.imageUrl ? `<img src="${data.imageUrl}" style="max-height:80px; border-radius:5px; border:1px solid #ccc;">` : `<div style="width:80px; height:80px; background:#eee; border-radius:5px; display:flex; align-items:center; justify-content:center; font-size:0.8em; color:#999;">이미지 없음</div>`}
+                            </div>
+                            <div>
+                                <input type="file" id="t_file_${id}" accept="image/*" style="display:block; margin-bottom:5px; font-size:0.8em;">
+                                <button class="btn btn-outline" style="padding: 5px 10px; font-size: 0.8em;" onclick="uploadMissionImage('${id}')">Firebase로 등록</button>
+                                ${parseInt(id) <= 5 ? '<p style="font-size:0.7em; color:#999; margin:5px 0 0 0;">(images 폴더 사진 덮어쓰기)</p>' : ''}
+                            </div>
+                        </div>
+                        <div style="background:#f9f9f9; padding: 10px; border-radius: 5px;">
+                            <strong style="font-size:0.9em;">정답 설정</strong><br>
+                            동물: <input type="text" id="t_animal_${id}" value="${data.animal || ''}"> 
+                            아이템: <input type="text" id="t_item_${id}" value="${data.item || ''}"><br>
+                            색상: <input type="text" id="t_color_${id}" value="${data.color || ''}"> 
+                            장소: <input type="text" id="t_place_${id}" value="${data.place || ''}">
+                            <button class="btn btn-primary" style="padding: 5px 10px; font-size: 0.8em; margin-top:5px;" onclick="saveMissionData('${id}')">정답 저장</button>
+                        </div>
+                    `;
+                } else {
+                    card.querySelector('.m-idx').textContent = index + 1;
+                    const imgWrap = el(`t_img_wrap_${id}`);
+                    if (data.imageUrl) {
+                        if(!imgWrap.innerHTML.includes(data.imageUrl)) {
+                            imgWrap.innerHTML = `<img src="${data.imageUrl}" style="max-height:80px; border-radius:5px; border:1px solid #ccc;">`;
+                        }
+                    } else {
+                        imgWrap.innerHTML = `<div style="width:80px; height:80px; background:#eee; border-radius:5px; display:flex; align-items:center; justify-content:center; font-size:0.8em; color:#999;">이미지 없음</div>`;
+                    }
+                }
+            });
+            
+            Array.from(container.children).forEach(card => {
+                const id = card.id.replace('t_card_', '');
+                if (!missionData[id]) card.remove();
+            });
         }
 
         // 초기 실행
-        window.onload = () => loadMissionImage(1);
+        window.onload = () => loadMissionList();
     </script>
 </body>
 </html>
