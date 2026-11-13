@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI 그림 탐정단</title>
+    <!-- 폭죽 애니메이션을 위한 라이브러리 추가 -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         :root { 
             --primary: #8e44ad; 
@@ -151,7 +153,7 @@
             <div class="panel" id="rightPanel">
                 <div class="panel-title" style="color: var(--danger);">🖍️ ② 그림을 설명해요</div>
                 
-                <!-- A형 영역 (카테고리별) -->
+                <!-- A형 영역 -->
                 <div id="area_A" class="a-type-area">
                     <div class="question-group">
                         <div class="question-title">① 어떤 동물인가요?</div>
@@ -171,13 +173,13 @@
                     </div>
                 </div>
 
-                <!-- B형 영역 (혼합 단어 뭉치) -->
+                <!-- B형 영역 -->
                 <div id="area_B" class="b-type-area hidden">
                     <p style="font-size: 0.9em; margin-bottom: 10px;">그림에 맞는 단어를 모두 골라 보세요.</p>
                     <div class="word-cloud" id="b_word_cloud"></div>
                 </div>
 
-                <!-- C형 영역 (직접 입력) -->
+                <!-- C형 영역 -->
                 <div id="area_C" class="c-type-area hidden">
                     <p style="font-size: 0.9em; margin-bottom: 10px;">그림을 보고 문장을 적거나 말해 보세요.</p>
                     <textarea id="cTypeInput" class="c-type-input" placeholder="예: 놀이터에 하늘색 안경을 쓴 코끼리가 있어요." oninput="updateSummaryC()"></textarea>
@@ -262,7 +264,10 @@
         let userSelections = { animal: '', item: '', color: '', place: '' };
         let bTypeSelections = []; 
 
-        // ★ 1. 기본 제공 로컬 미션 데이터 (사용자 요청 반영)
+        // 탭별로 완료된 미션 ID를 저장하는 Set
+        let completedMissions = { A: new Set(), B: new Set(), C: new Set() };
+
+        // 기본 제공 로컬 미션 데이터
         const defaultMissions = {
             '1': { id: '1', animal: '강아지', item: '털모자', color: '빨간', place: '잔디밭', imageUrl: './images/mission1.png' },
             '2': { id: '2', animal: '고양이', item: '목도리', color: '파란', place: '눈밭', imageUrl: './images/mission2.png' },
@@ -285,25 +290,21 @@
                 const select = el('missionSelect');
                 let currentValue = select.value;
                 
-                // 로컬 기본 미션 1~5 셋업
                 missionData = JSON.parse(JSON.stringify(defaultMissions));
                 
-                // Firebase 데이터를 기본 미션 위에 덮어쓰거나 (새 미션 6~) 추가
                 snapshot.forEach(document => {
                     const data = document.data();
                     const docId = data.id || document.id.replace('mission_', '');
                     data.id = docId;
                     
                     if (missionData[docId]) {
-                        // 기본 미션(1~5)인 경우, 파이어베이스에 이미지가 없으면 기본 경로(images/...) 유지
                         const preserveImage = (!data.imageUrl && parseInt(docId) <= 5) ? missionData[docId].imageUrl : data.imageUrl;
                         missionData[docId] = { ...missionData[docId], ...data, imageUrl: preserveImage };
                     } else {
-                        missionData[docId] = data; // 선생님이 새로 추가한 미션 6~
+                        missionData[docId] = data; 
                     }
                 });
 
-                // 셀렉트 박스 갱신 (ID 번호 순서대로)
                 select.innerHTML = '';
                 const sortedKeys = Object.keys(missionData).sort((a,b) => Number(a) - Number(b));
                 
@@ -319,7 +320,6 @@
                     select.appendChild(option);
                 });
 
-                // 선택값 복구
                 if (!missionData[currentValue]) {
                     currentValue = sortedKeys[0];
                     select.value = currentValue;
@@ -327,7 +327,6 @@
                     select.value = currentValue;
                 }
 
-                // 화면 렌더링 분기
                 if (isFirstLoad) {
                     loadMissionContent(currentValue);
                     isFirstLoad = false;
@@ -349,7 +348,7 @@
             });
         }
 
-        // --- 미션 화면 구성 (초기화) ---
+        // --- 미션 화면 구성 ---
         window.loadMissionContent = (missionId) => {
             currentMission = missionId;
             const data = missionData[missionId];
@@ -369,7 +368,6 @@
         }
 
         function generateOptions(data) {
-            // 늘어난 단어에 맞춘 더미 오답 풀
             const dummies = {
                 animal: ['고양이', '토끼', '곰돌이', '강아지', '공룡', '코끼리'],
                 item: ['목도리', '안경', '가방', '털모자', '풍선', '모자'],
@@ -379,7 +377,7 @@
             const allWords = [];
 
             ['animal', 'item', 'color', 'place'].forEach(cat => {
-                const ans = data[cat] || dummies[cat][0]; // 기본값
+                const ans = data[cat] || dummies[cat][0]; 
                 const fake = dummies[cat].find(d => d !== ans) || dummies[cat][1];
                 const options = [ans, fake].sort(() => Math.random() - 0.5);
                 
@@ -411,6 +409,20 @@
             };
             return icons[word] || '📌';
         }
+
+        // 글로벌 이동 함수 선언
+        window.goToNextMission = (nextId) => {
+            el('missionSelect').value = nextId;
+            loadMissionContent(nextId);
+        };
+
+        window.copyPrompt = (text) => {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast("✅ 프롬프트가 복사되었습니다!");
+            }).catch(() => {
+                showToast("❌ 복사에 실패했습니다.");
+            });
+        };
 
         el('missionSelect').onchange = (e) => loadMissionContent(e.target.value);
 
@@ -444,7 +456,6 @@
             const { color, item, animal, place } = userSelections;
             const parts = [];
             
-            // 종성(받침) 여부 확인하여 을/를, 이/가 매핑
             const checkJongseong = (word) => (word.charCodeAt(word.length - 1) - 0xac00) % 28 > 0;
 
             if(color) parts.push(color);
@@ -515,7 +526,7 @@
             }
         };
 
-        // --- 정답 검증 ---
+        // --- 정답 검증 및 폭죽 로직 ---
         window.checkAnswer = () => {
             let isCorrect = false;
             let promptText = el('summaryText').textContent;
@@ -540,11 +551,38 @@
 
             const resultBox = el('resultBox');
             if (isCorrect) {
+                // 성공 시 미션 완료 처리
+                completedMissions[currentTab].add(String(currentMission));
+                const totalMissions = Object.keys(missionData).length;
+                const isAllCleared = completedMissions[currentTab].size === totalMissions;
+                
+                // 폭죽 터트리기 (해당 유형의 모든 미션을 클리어한 경우)
+                if (isAllCleared && window.confetti) {
+                    confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 }, zIndex: 9999 });
+                    setTimeout(() => showToast(`🎊 ${currentTab}형의 모든 미션을 클리어했습니다! 🎊`), 500);
+                }
+
+                // 다음 단계 버튼 로직
+                const sortedKeys = Object.keys(missionData).sort((a,b) => Number(a) - Number(b));
+                const currentIndex = sortedKeys.indexOf(String(currentMission));
+                const hasNext = currentIndex < sortedKeys.length - 1;
+                const nextMissionId = hasNext ? sortedKeys[currentIndex + 1] : null;
+
+                let nextBtnHtml = hasNext 
+                    ? `<button class="btn btn-success" style="flex:1; padding:10px; font-size:0.9em;" onclick="goToNextMission('${nextMissionId}')">➡️ 다음 단계로</button>` 
+                    : `<div style="flex:1; padding:10px; text-align:center; font-weight:bold; color:var(--primary); background:var(--primary-light); border-radius:8px;">🏆 마지막 단계!</div>`;
+
                 resultBox.innerHTML = `
                     <div style="font-size: 3em; margin-bottom: 10px;">🎉</div>
                     <p style="color:var(--success); font-weight:bold; font-size: 1.1em; margin-bottom: 5px;">성공했어요!</p>
                     <p style="margin-bottom: 15px; color:#555;">목표 그림의 요소들을 완벽하게 찾았습니다.</p>
-                    <button class="btn btn-primary" style="background:#f39c12; font-size:1.1em; padding:15px; width:80%;" onclick="runAI('${promptText}')">✨ 진짜 AI 그림 만들기</button>
+                    
+                    <button class="btn btn-primary" style="background:#f39c12; font-size:1.1em; padding:15px; width:100%; margin-bottom:10px;" onclick="runAI('${promptText}')">✨ 진짜 AI 그림 만들기</button>
+                    
+                    <div style="display:flex; gap:10px; width:100%;">
+                        <button class="btn btn-outline" style="flex:1; padding:10px; font-size:0.9em;" onclick="copyPrompt('${promptText}')">📋 프롬프트 복사</button>
+                        ${nextBtnHtml}
+                    </div>
                 `;
             } else {
                 resultBox.innerHTML = `
@@ -563,6 +601,7 @@
         // --- AI API ---
         window.runAI = async (promptText) => {
             const resultBox = el('resultBox');
+            // AI 실행 시 기존 버튼들 잠시 숨기고 로딩 표시
             resultBox.innerHTML = `
                 <div style="font-size: 2em; margin-bottom: 10px;">⏳</div>
                 <p style="color:var(--primary); font-weight:bold;">AI가 그림을 뚝딱뚝딱 그리고 있어요!</p>
@@ -593,10 +632,24 @@
                 
                 if (data.predictions && data.predictions.length > 0) {
                     const b64 = data.predictions[0].bytesBase64Encoded;
+                    
+                    // AI 그림 완성 후, "다음 미션으로" 갈 수 있도록 버튼들 다시 복구
+                    const sortedKeys = Object.keys(missionData).sort((a,b) => Number(a) - Number(b));
+                    const currentIndex = sortedKeys.indexOf(String(currentMission));
+                    const hasNext = currentIndex < sortedKeys.length - 1;
+                    const nextMissionId = hasNext ? sortedKeys[currentIndex + 1] : null;
+
+                    let nextBtnHtml = hasNext 
+                        ? `<button class="btn btn-success" style="flex:1; padding:10px; font-size:0.9em;" onclick="goToNextMission('${nextMissionId}')">➡️ 다음 단계로</button>` 
+                        : `<div style="flex:1; padding:10px; text-align:center; font-weight:bold; color:var(--primary); background:var(--primary-light); border-radius:8px;">🏆 마지막 단계!</div>`;
+
                     resultBox.innerHTML = `
                         <p style="color:var(--primary); font-weight:bold; margin:0 0 10px 0;">짠! 내가 설명한 AI 그림이에요 🎨</p>
-                        <img src="data:image/jpeg;base64,${b64}" class="result-img">
-                        <button class="btn btn-outline" style="margin-top:15px;" onclick="resetResultBox()">다시 하기</button>
+                        <img src="data:image/jpeg;base64,${b64}" class="result-img" style="margin-bottom: 15px;">
+                        <div style="display:flex; gap:10px; width:100%;">
+                            <button class="btn btn-outline" style="flex:1; padding:10px; font-size:0.9em;" onclick="copyPrompt('${promptText}')">📋 프롬프트 복사</button>
+                            ${nextBtnHtml}
+                        </div>
                     `;
                 }
             } catch (error) {
@@ -669,7 +722,6 @@
         function renderTeacherMissions() {
             const container = el('teacherMissionManager');
             
-            // 기존 DOM을 파괴하지 않고 업데이트하여 타이핑 중 포커스 잃는 문제 방지
             Object.values(missionData).forEach((data, index) => {
                 const id = data.id;
                 let card = el(`t_card_${id}`);
