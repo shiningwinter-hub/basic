@@ -1,0 +1,8 @@
+AI_Detective/
+├── index.html       (아래에 제공되는 메인 웹앱 코드)
+└── images/          (여기에 이미지를 넣습니다)
+    ├── mission1.png
+    ├── mission2.png
+    ├── mission3.png
+    ├── mission4.png
+    └── mission5.png
