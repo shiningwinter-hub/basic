@@ -69,7 +69,7 @@
         /* Right Panel - A Type (Categorized) */
         .a-type-area .question-group { margin-bottom: 20px; }
         .a-type-area .question-title { font-size: 0.95em; margin-bottom: 10px; color: #444; }
-        .a-type-area .options-grid { display: flex; gap: 10px; flex-wrap: wrap; } /* 수정: 줄바꿈 허용 */
+        .a-type-area .options-grid { display: grid; gap: 10px; } /* CSS Grid 적용하여 깔끔하게 정렬 */
         
         /* Right Panel - B Type (Word Cloud) */
         .b-type-area .word-cloud { display: flex; flex-wrap: wrap; gap: 10px; border: 1px solid var(--border); padding: 15px; border-radius: 10px; }
@@ -79,7 +79,7 @@
             padding: 10px 15px; border: 1px solid var(--border); border-radius: 20px; 
             background: white; cursor: pointer; text-align: center; font-size: 0.95em; transition: 0.2s;
         }
-        .a-type-area .option-btn { flex: 1; min-width: 100px; border-radius: 10px; padding: 12px; } /* 최소 너비 지정 */
+        .a-type-area .option-btn { border-radius: 10px; padding: 12px; width: 100%; box-sizing: border-box; } /* 그리드 안에서 꽉 차게 변경 */
         
         .option-btn:hover { background: #f9f9f9; }
         .option-btn.selected { border-color: var(--danger); background: #fff5f5; color: var(--danger); font-weight: bold; }
@@ -387,7 +387,9 @@
         // 유의어 판별 함수
         function checkSynonym(text, targetWord) {
             if (!targetWord) return true;
+            // 등록된 유의어 배열을 가져오거나, 없으면 자기 자신만 포함된 배열 사용
             const synonyms = synonymsMap[targetWord] || [targetWord];
+            // 학생이 입력한 텍스트에 유의어 중 하나라도 포함되어 있으면 정답으로 인정
             return synonyms.some(syn => text.includes(syn));
         }
 
@@ -552,6 +554,12 @@
                 const containerA = el(`q_${cat}`);
                 if(containerA) {
                     containerA.innerHTML = '';
+                    
+                    // 난이도에 따른 그리드 열 개수 설정 (Grid 적용)
+                    if (optCount === 2) containerA.style.gridTemplateColumns = 'repeat(2, 1fr)';
+                    else if (optCount === 4) containerA.style.gridTemplateColumns = 'repeat(2, 1fr)';
+                    else if (optCount === 6) containerA.style.gridTemplateColumns = 'repeat(3, 1fr)';
+                    
                     options.forEach(opt => {
                         const icon = getIcon(opt);
                         containerA.innerHTML += `<button class="option-btn" onclick="selectOptionA('${cat}', '${opt}', this)">${icon} ${opt}</button>`;
