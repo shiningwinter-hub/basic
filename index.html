@@ -315,7 +315,16 @@
             '5': { id: '5', animal: '코끼리', item: '안경', color: '하늘색', place: '놀이터', imageUrl: './images/mission5.png' }
         };
 
-        // C형 유의어(동의어) 매핑 사전
+        // 특정 미션에서 절대 오답으로 나오면 안되는 헷갈리는 단어 목록
+        const bannedFakesByMission = {
+            '1': ['꽃밭', '공원', '숲', '모자'], // 잔디밭/털모자와 헷갈릴 수 있는 것들 제외
+            '2': ['하늘색'], // 파란색과 헷갈릴 수 있는 색 제외
+            '3': ['잔디밭', '공원', '숲', '목도리'], // 꽃밭과 헷갈리는 배경, 노란색 풍선과 헷갈리는 목도리 제외
+            '4': ['잔디밭', '공원', '꽃밭', '털모자'], // 숲/모자와 헷갈리는 것 제외
+            '5': ['파란', '공원', '잔디밭'] // 하늘색/놀이터와 헷갈리는 것 제외
+        };
+
+        // C형 유의어(동의어) 매핑 사전 (이미지에서 보일 수 있는 단어 허용)
         const synonymsMap = {
             '강아지': ['강아지', '개', '멍멍', '댕댕'],
             '고양이': ['고양이', '야옹', '냥'],
@@ -334,9 +343,9 @@
             '목도리': ['목도리', '스카프'],
             '안경': ['안경', '선글라스'],
             '가방': ['가방', '백'],
-            '털모자': ['털모자', '비니', '겨울모자', '모자'], // 모자를 털모자의 유의어로 인정
+            '털모자': ['털모자', '비니', '겨울모자', '모자', '빨간모자'], // 모자를 털모자의 유의어로 강하게 인정
             '풍선': ['풍선'],
-            '모자': ['모자', '캡', '털모자'],
+            '모자': ['모자', '캡', '털모자', '보라모자'],
             '리본': ['리본'],
             '신발': ['신발', '구두', '운동화'],
             '우산': ['우산'],
@@ -344,14 +353,14 @@
             '시계': ['시계', '손목시계'],
             '지팡이': ['지팡이', '막대기'],
             '왕관': ['왕관', '크라운'],
-            '귀마개': ['귀마개', '귀도리'], // 귀마개 유의어 추가
+            '귀마개': ['귀마개', '귀도리'], 
 
-            '파란': ['파란', '파랑', '푸른', '블루', '파란색'],
+            '파란': ['파란', '파랑', '푸른', '블루', '파란색', '하늘색', '하늘'],
             '노란': ['노란', '노랑', '누런', '옐로우', '노란색'],
             '초록': ['초록', '초록색', '그린', '녹색', '풀색'],
             '빨간': ['빨간', '빨강', '붉은', '레드', '빨간색'],
             '보라': ['보라', '보라색', '퍼플', '자주'],
-            '하늘색': ['하늘색', '하늘', '연파랑', '스카이블루'],
+            '하늘색': ['하늘색', '하늘', '연파랑', '스카이블루', '파란', '파란색', '푸른'], // 파란색도 하늘색 유의어로 인정
             '핑크': ['핑크', '분홍', '분홍색', '핑크색'],
             '주황': ['주황', '주황색', '오렌지', '오렌지색', '주황빛'],
             '검은': ['검은', '검정', '까만', '블랙', '검은색', '검정색'],
@@ -363,10 +372,10 @@
             '바닷가': ['바닷가', '바다', '해변', '해수욕장'],
             '우주': ['우주', '우주공간', '은하수'],
             '교실': ['교실', '학교', '학급'],
-            '잔디밭': ['잔디밭', '잔디', '들판', '초원', '풀밭', '공원'],
+            '잔디밭': ['잔디밭', '잔디', '들판', '초원', '풀밭', '공원', '꽃밭', '꽃'], // 배경에 꽃이 있으므로 유의어 인정
             '눈밭': ['눈밭', '눈', '설원', '겨울'],
-            '꽃밭': ['꽃밭', '꽃', '정원', '화단'],
-            '숲': ['숲', '숲속', '산'],
+            '꽃밭': ['꽃밭', '꽃', '정원', '화단', '잔디밭', '들판', '풀밭'],
+            '숲': ['숲', '숲속', '산', '나무', '들판', '풀밭', '잔디밭'],
             '놀이터': ['놀이터', '공원'],
             '사막': ['사막', '모래'],
             '도서관': ['도서관', '책방'],
@@ -378,9 +387,7 @@
         // 유의어 판별 함수
         function checkSynonym(text, targetWord) {
             if (!targetWord) return true;
-            // 등록된 유의어 배열을 가져오거나, 없으면 자기 자신만 포함된 배열 사용
             const synonyms = synonymsMap[targetWord] || [targetWord];
-            // 학생이 입력한 텍스트에 유의어 중 하나라도 포함되어 있으면 정답으로 인정
             return synonyms.some(syn => text.includes(syn));
         }
 
@@ -399,15 +406,17 @@
             el('landingScreen').classList.add('hidden');
             el('mainApp').classList.remove('hidden');
             
-            // 배지 업데이트
             const badge = el('levelBadge');
             if (level === 1) { badge.textContent = "🌱 초급자용"; badge.style.background = "#2ecc71"; }
             else if (level === 2) { badge.textContent = "🌿 중급자용"; badge.style.background = "#f39c12"; }
             else { badge.textContent = "🌳 고급자용"; badge.style.background = "#e74c3c"; }
 
-            // 데이터 강제 리로드하여 난이도(선택지 개수) 적용
             if(Object.keys(missionData).length > 0) {
-                loadMissionContent(el('missionSelect').value || Object.keys(missionData)[0]);
+                // 앱 시작 시 무조건 1번 미션부터 (정렬된 키의 첫번째)
+                const sortedKeys = Object.keys(missionData).sort((a,b) => Number(a) - Number(b));
+                const firstId = sortedKeys[0];
+                el('missionSelect').value = firstId;
+                loadMissionContent(firstId);
             }
         };
 
@@ -516,31 +525,23 @@
 
             const dummies = {
                 animal: ['고양이', '토끼', '곰돌이', '강아지', '공룡', '코끼리', '사자', '호랑이', '기린', '원숭이', '돼지', '여우', '펭귄'],
-                // 귀마개 추가
                 item: ['목도리', '안경', '가방', '털모자', '풍선', '모자', '리본', '신발', '우산', '장갑', '시계', '지팡이', '왕관', '귀마개'],
                 color: ['파란', '노란', '초록', '빨간', '보라', '하늘색', '핑크', '주황', '검은', '하얀', '회색', '무지개색', '갈색'],
                 place: ['바닷가', '우주', '교실', '잔디밭', '눈밭', '꽃밭', '숲', '놀이터', '사막', '도서관', '공원', '성', '동굴']
             };
+            
             const allWords = [];
-
-            // 3번 토끼 미션 오답 선택지에 귀마개 포함시키기
-            if (currentMission === '3') {
-               // 오답 후보에서 목도리를 제거하고 귀마개를 우선적으로 포함하도록 변경
-               dummies.item = dummies.item.filter(item => item !== '목도리');
-               if (!dummies.item.includes('귀마개')) {
-                   dummies.item.push('귀마개');
-               }
-            }
+            const banned = bannedFakesByMission[currentMission] || [];
 
             ['animal', 'item', 'color', 'place'].forEach(cat => {
                 const ans = data[cat] || dummies[cat][0]; 
                 
-                // 정답을 제외한 오답 풀에서 필요한 만큼 랜덤 추출
-                let fakePool = dummies[cat].filter(d => d !== ans);
+                // 정답과 금지어(banned)를 제외한 오답 풀 생성
+                let fakePool = dummies[cat].filter(d => d !== ans && !banned.includes(d));
                 fakePool.sort(() => Math.random() - 0.5);
                 let selectedFakes = fakePool.slice(0, optCount - 1);
 
-                // 3번 토끼 미션 아이템 카테고리에 오답으로 '귀마개'가 포함되지 않았다면, 오답 중 하나를 귀마개로 교체
+                // 3번 토끼 미션 아이템 카테고리에 오답으로 '귀마개'가 포함되지 않았다면, 오답 중 하나를 귀마개로 무조건 교체
                 if (currentMission === '3' && cat === 'item' && !selectedFakes.includes('귀마개')) {
                     selectedFakes[0] = '귀마개';
                 }
@@ -723,7 +724,7 @@
             }
         };
 
-        // --- 정답 검증 및 폭죽 로직 (AI 버튼 제거) ---
+        // --- 정답 검증 및 폭죽 로직 (AI 버튼 완전히 제거됨) ---
         window.checkAnswer = () => {
             let isCorrect = false;
             let promptText = el('summaryText').textContent;
@@ -768,7 +769,7 @@
                     ? `<button class="btn btn-success" style="flex:1; padding:10px; font-size:1.1em;" onclick="goToNextMission('${nextMissionId}')">➡️ 다음 단계로 넘어가기</button>` 
                     : `<div style="flex:1; padding:10px; text-align:center; font-weight:bold; color:var(--primary); background:var(--primary-light); border-radius:8px; font-size:1.1em;">🏆 마지막 단계! 축하합니다!</div>`;
 
-                // '진짜 AI 그림 만들기' 버튼을 제거하고 바로 복사 및 다음버튼 표시
+                // 가짜 AI 생성 로딩 없이 바로 성공 화면과 다음버튼, 복사버튼 표시
                 resultBox.innerHTML = `
                     <div style="font-size: 3.5em; margin-bottom: 10px;">🎉</div>
                     <p style="color:var(--success); font-weight:bold; font-size: 1.3em; margin-bottom: 5px;">성공했어요!</p>
