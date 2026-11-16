@@ -502,11 +502,12 @@
             
             generateOptions(data);
             
+            // 입력값 및 상태 완벽 초기화
             userSelections = { animal: '', item: '', color: '', place: '' };
             bTypeSelections = [];
             el('cTypeInput').value = "";
-            updateSummaryA(); // 초기화
-            resetResultBox();
+            el('summaryText').textContent = "단어를 선택하거나 문장을 적어 보세요."; 
+            resetResultBox(); 
         }
 
         function generateOptions(data) {
@@ -595,6 +596,8 @@
 
         // --- 탭 및 입력 로직 ---
         window.switchTab = (tab) => {
+            if (currentTab === tab) return; // 동일 탭 클릭 무시
+            
             currentTab = tab;
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelector(`.tab-btn[data-tab="${tab}"]`).classList.add('active');
@@ -604,10 +607,13 @@
             el('area_C').classList.add('hidden');
             el(`area_${tab}`).classList.remove('hidden');
             
-            if(tab === 'A') updateSummaryA();
-            if(tab === 'B') updateSummaryB();
-            if(tab === 'C') updateSummaryC();
-            resetResultBox();
+            // 다른 탭으로 넘어갈 때 미션 1로 완전 리셋 (요청 사항 반영)
+            const sortedKeys = Object.keys(missionData).sort((a,b) => Number(a) - Number(b));
+            if (sortedKeys.length > 0) {
+                const firstMissionId = sortedKeys[0];
+                el('missionSelect').value = firstMissionId;
+                loadMissionContent(firstMissionId);
+            }
         };
 
         window.selectOptionA = (category, value, btnObj) => {
@@ -781,6 +787,10 @@
                     <button class="btn btn-danger" onclick="resetResultBox()">🔄 다시 시도하기</button>
                 `;
             }
+        };
+
+        window.resetResultBox = () => {
+            el('resultBox').innerHTML = `<p style="color: #666; font-size: 0.9em;">설명한 뒤 정답 확인하기 버튼을 눌러요!</p>`;
         };
 
         // --- 선생님 관리자 모드 ---
